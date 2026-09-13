@@ -10,6 +10,7 @@ dependencies = [
     "apscheduler>=3.11.0",
     "fastapi[standard]>=0.112.1",
     "firecrawl-py>=2.8.0",
+    "interfaze>=1.0.3",
     "pinecone>=7.1.0",
     "psycopg2-binary>=2.9.10",
     "pydantic-settings>=2.9.1",

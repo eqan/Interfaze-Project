@@ -55,6 +55,7 @@ flowchart TD
     App --> Users[users]
     App --> Ticket[ticket]
     App --> Stats[stats]
+    App --> DocumentIntelligence[document_intelligence]
     App --> Ingestion[ingestion]
     App --> Config[config]
     App --> Deps[dependencies]
@@ -158,6 +159,7 @@ Current domains:
 - `users`: auth exchange, JWT verification, user persistence
 - `ticket`: ticket lifecycle
 - `stats`: conversation analytics
+- `document_intelligence`: typed document extraction flows backed by Interfaze
 - `ingestion`: scrape, embed, search
 
 ## Feature Flags
@@ -170,6 +172,7 @@ flowchart TD
     Stats[stats router]
     Ticket[ticket router]
     Ingestion[ingestion router]
+    Interfaze[interfaze router]
     Scheduler[scheduler startup]
     Sentry[sentry init]
     Grounding[google search grounding]
@@ -179,6 +182,7 @@ flowchart TD
     App --> Stats
     App --> Ticket
     App --> Ingestion
+    App --> Interfaze
     App --> Scheduler
     App --> Sentry
     Services --> Grounding
@@ -190,6 +194,7 @@ Implemented flags in the current codebase:
 - `enable_stats`
 - `enable_ticketing`
 - `enable_ingestion`
+- `enable_interfaze`
 - `enable_sentry`
 - `enable_google_search_grounding`
 
@@ -213,6 +218,29 @@ flowchart LR
     Runtime --> Pool
     Runtime --> AI
     Runtime --> Features
+```
+
+## Interfaze Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Authenticated Client
+    participant R as /interfaze/extract-id
+    participant D as Auth Dependency
+    participant S as documentIntelligenceService
+    participant A as interfaze_client adapter
+    participant I as Interfaze SDK/API
+
+    C->>R: POST image_url + instruction
+    R->>D: Verify JWT
+    D-->>R: Auth payload
+    R->>S: Typed request DTO
+    S->>A: extract_id_details()
+    A->>I: chat.completions.parse(...)
+    I-->>A: Parsed ID schema
+    A-->>S: InterfazeIdExtractionResult
+    S-->>R: Structured result
+    R-->>C: status + message + result
 ```
 
 ## Caching Strategy
@@ -263,7 +291,7 @@ sequenceDiagram
 flowchart LR
     Services["Services"]
     Adapters["app/integrations/*"]
-    Providers["Gemini / DeepSeek / Pinecone / Voyage / Firecrawl / Google"]
+    Providers["Gemini / DeepSeek / Pinecone / Voyage / Firecrawl / Google / Interfaze"]
 
     Services --> Adapters
     Adapters --> Providers
@@ -299,6 +327,7 @@ flowchart TD
 flowchart TD
     Ask[Ask 3 clarification questions]
     Contract[Confirm inputs and outputs]
+    Sketch[Draft zoomed-out + focused Mermaid flow]
     Reuse{Existing module fits?}
     Existing[Extend existing domain]
     New[Create new domain/use case]
@@ -311,7 +340,8 @@ flowchart TD
     Docs[Document in same area]
 
     Ask --> Contract
-    Contract --> Reuse
+    Contract --> Sketch
+    Sketch --> Reuse
     Reuse -->|Yes| Existing
     Reuse -->|No| New
     Existing --> DTOs

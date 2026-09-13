@@ -26,6 +26,7 @@ class RateLimitSettings(BaseModel):
     chatbot_stream: str = "5/second"
     ingestion_scrape: str = "5/minute"
     ingestion_search: str = "5/second"
+    interfaze_extract: str = "5/minute"
     ticket: str = "5/second"
     stats: str = "5/second"
 
@@ -44,6 +45,7 @@ class FeatureSettings(BaseModel):
     enable_stats: bool = True
     enable_ticketing: bool = True
     enable_ingestion: bool = True
+    enable_interfaze: bool = True
     enable_google_search_grounding: bool = True
 
 
@@ -109,6 +111,9 @@ class Settings(BaseSettings):
     pinecone_index_name: str = ""
     pinecone_api_key: str = ""
     pinecone_host: str = ""
+    interfaze_api_key: str = ""
+    interfaze_model_name: str = "interfaze-beta"
+    interfaze_base_url: str = ""
     runtime_config_path: str = str(Path(__file__).resolve().parent / "runtime.json")
 
     model_config = SettingsConfigDict(

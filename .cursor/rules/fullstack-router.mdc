@@ -19,6 +19,8 @@ For feature requests:
 
 - ask 3 important clarification questions when the request is ambiguous
 - confirm the user flow plus API inputs and outputs
+- draft a zoomed-out Mermaid architecture diagram of the full backend/frontend flow before implementing meaningful changes
+- add a focused Mermaid diagram for the particular backend or frontend slice being modified when the task is non-trivial
 - reuse existing backend modules and frontend patterns when relevant
 - do backend contract work before frontend integration when both stacks change
 - verify both stacks before finishing

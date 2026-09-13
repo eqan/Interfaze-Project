@@ -9,6 +9,7 @@ Full-stack template for fast interview execution, AI-assisted feature work, and 
 - JSON-driven runtime defaults with `.env` overrides per environment
 - Cache-ready architecture with in-memory TTL now and Redis-ready abstraction
 - Internal test-token refresh flow for stable authenticated test runs
+- Interfaze-ready document extraction path in the backend for typed vision parsing demos
 - Dynamic Next.js frontend with HeroUI and App Router
 
 ## Current Structure
@@ -19,6 +20,7 @@ Full-stack template for fast interview execution, AI-assisted feature work, and 
 │   ├── app/
 │   │   ├── chatbot/
 │   │   ├── config/
+│   │   ├── document_intelligence/
 │   │   ├── ingestion/
 │   │   ├── stats/
 │   │   ├── ticket/
@@ -88,6 +90,7 @@ ENABLE_INTERNAL_TEST_AUTH=true
 INTERNAL_SERVICE_SECRET=replace-with-a-shared-secret
 TEST_AUTH_AUTO_REFRESH=true
 TEST_AUTH_SHARED_SECRET=replace-with-the-same-secret
+INTERFAZE_API_KEY=replace-with-your-interfaze-key
 ```
 
 ### 3. Start PostgreSQL
@@ -166,6 +169,30 @@ Use `.env` for values that change by environment, especially:
 - database credentials
 - provider API keys
 - internal test auth settings
+
+## Interfaze Readiness
+
+The backend now includes a typed Interfaze-backed demo route for ID parsing:
+
+```text
+POST /interfaze/extract-id
+```
+
+Request body:
+
+```json
+{
+  "image_url": "https://r2public.jigsawstack.com/interfaze/examples/id.jpg",
+  "instruction": "Extract the details from this ID"
+}
+```
+
+This route is intended as an interview-ready integration example:
+
+- it is authenticated like other cost-bearing product routes
+- it only accepts public `https://` image URLs for safer provider handoff
+- it uses a dedicated integration adapter instead of calling the SDK in the controller
+- it returns a structured parsed result for the sample ID fields
 
 Use `runtime.json` for reusable defaults, especially:
 

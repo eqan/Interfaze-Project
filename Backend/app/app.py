@@ -4,6 +4,9 @@ from config.config import limiter
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from chatbot.chatbotController import router as chatbot_router
+from document_intelligence.documentIntelligenceController import (
+    router as document_intelligence_router,
+)
 from ingestion.ingestionController import router as ingestion_router
 from stats.scheduler import scheduler
 from stats.statsController import router as stats_router
@@ -37,6 +40,8 @@ def create_app() -> FastAPI:
 
     app.include_router(chatbot_router)
     app.include_router(user_router)
+    if runtime.features.enable_interfaze:
+        app.include_router(document_intelligence_router)
     if runtime.features.enable_stats:
         app.include_router(stats_router)
     if runtime.features.enable_ticketing:

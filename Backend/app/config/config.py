@@ -83,3 +83,20 @@ def get_pinecone_index():
 
     client = Pinecone(api_key=settings.pinecone_api_key)
     return client.Index(host=settings.pinecone_host)
+
+
+@lru_cache(maxsize=1)
+def get_interfaze_client():
+    if not settings.interfaze_api_key:
+        return None
+
+    try:
+        from interfaze import Interfaze
+    except ImportError as exc:
+        raise RuntimeError("Interfaze SDK is not installed") from exc
+
+    kwargs = {"api_key": settings.interfaze_api_key}
+    if settings.interfaze_base_url:
+        kwargs["base_url"] = settings.interfaze_base_url
+
+    return Interfaze(**kwargs)

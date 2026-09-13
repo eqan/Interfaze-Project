@@ -40,14 +40,16 @@ When a feature spans both backend and frontend, follow this order:
 
 1. Ask exactly 3 important clarification questions when the request is ambiguous.
 2. Confirm the user flow, API inputs, API outputs, and failure states.
-3. Confirm the freshness and caching expectation for each data touchpoint when stale data could affect trust, auth, or workflow correctness.
-4. Decide whether an existing backend module and frontend route pattern can be reused.
-5. Define or update backend contracts first.
-6. Implement backend behavior and tests.
-7. Implement frontend integration against the confirmed backend contract.
-8. Add frontend validation states, loading states, and error states.
-9. Update documentation in both stacks when structure or flow changes.
-10. Verify backend and frontend separately before finishing.
+3. Draft a zoomed-out Mermaid architecture diagram of the end-to-end flow before implementation.
+4. Add a second focused Mermaid diagram for the specific backend or frontend area being modified when the task is non-trivial.
+5. Confirm the freshness and caching expectation for each data touchpoint when stale data could affect trust, auth, or workflow correctness.
+6. Decide whether an existing backend module and frontend route pattern can be reused.
+7. Define or update backend contracts first.
+8. Implement backend behavior and tests.
+9. Implement frontend integration against the confirmed backend contract.
+10. Add frontend validation states, loading states, and error states.
+11. Update documentation in both stacks when structure or flow changes.
+12. Verify backend and frontend separately before finishing.
 
 ## Clarification Gate
 
@@ -73,6 +75,18 @@ If the user does not know the exact API shape, recommend one before implementati
 - for time-boxed app work, avoid placeholder marketing copy and verbose explanatory UI
 - when frontend work is involved, prefer practical product UX over decorative layout filler
 - when frontend work is involved, design the end-to-end flow first and ensure loading, empty, error, success, and recovery states are part of the feature rather than follow-up polish
+- before implementing a meaningful change, force a quick systems view first: one zoomed-out diagram for the full flow and one focused diagram for the touched slice when needed
+
+## Pre-Implementation Architecture Sketch
+
+Before implementing non-trivial backend, frontend, or full-stack changes:
+
+- produce a quick Mermaid diagram that shows the zoomed-out architecture or request flow end to end
+- also produce a second Mermaid diagram for the particular area being modified: for example the backend request path, frontend route composition, auth flow, cache path, or integration boundary
+- keep these diagrams lightweight and decision-oriented; they are meant to clarify the change before code is written, not become large documentation exercises
+- if the task is small, one concise focused diagram may be enough, but still reason about the surrounding flow first
+- if the change alters the real architecture, promote the sketch into the relevant `ARCHITECTURE.md` or README update in the same task
+- use the diagrams to confirm boundaries, dependencies, state transitions, caching decisions, and reuse opportunities before editing code
 
 ## Documentation Checks
 
