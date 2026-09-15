@@ -19,3 +19,11 @@ export type {
   WorkflowStep,
   WorkspaceSignal,
 } from "@/types/site";
+export type {
+  ExtractIdTaskInput,
+  ExtractIdTaskResult,
+  TaskRunErrorShape,
+  TaskRunMeta,
+  TaskRunRequest,
+  TaskRunResponse,
+} from "@/types/task";

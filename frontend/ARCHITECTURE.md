@@ -1,6 +1,6 @@
 # Frontend Architecture
 
-This frontend is now organized as a SaaS-ready workspace: public auth stays isolated, protected routes share one shell, and API/runtime boundaries are centralized before feature growth starts.
+This frontend is now organized as a practical task workspace: public auth stays isolated, protected routes share one shell, and the main route runs one typed operator workflow instead of acting only as a documentation surface.
 
 ## System Map
 
@@ -13,6 +13,7 @@ flowchart LR
     Sections[Route sections]
     Config[Config and content maps]
     Runtime[Runtime and API helpers]
+    TaskRoute[Next.js task route]
     Backend[FastAPI backend]
 
     User --> PublicRoutes
@@ -21,6 +22,8 @@ flowchart LR
     Shell --> Sections
     Sections --> Config
     Sections --> Runtime
+    Runtime --> TaskRoute
+    TaskRoute --> Backend
     Runtime --> Backend
 ```
 
@@ -47,7 +50,7 @@ flowchart TD
     App --> Protected
     App --> RootLayout[layout.tsx]
     Public --> Auth[auth/page.tsx]
-    Protected --> Home[page.tsx]
+    Protected --> Home[page.tsx task console]
     Protected --> Architecture[architecture/page.tsx]
     Protected --> Playbook[playbook/page.tsx]
     Protected --> BackendApi[backend-api/page.tsx]
@@ -110,6 +113,7 @@ sequenceDiagram
 sequenceDiagram
     participant U as User
     participant R as Route page
+    participant T as /api/tasks/run
     participant C as Config
     participant S as Shared sections
     participant API as lib/api/*
@@ -120,11 +124,34 @@ sequenceDiagram
     R->>S: Compose cards and panels
     opt Dynamic data
         R->>API: Request typed payload
-        API->>B: Call backend endpoint
-        B-->>API: DTO response
+        API->>T: Call same-origin task route
+        T->>B: Proxy typed backend request
+        B-->>T: DTO response
+        T-->>API: Task response envelope
         API-->>R: Parsed view model
     end
     R-->>U: Render product surface
+```
+
+## Task Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant C as Extraction console
+    participant T as /api/tasks/run
+    participant B as FastAPI backend
+    participant I as Interfaze route
+
+    U->>C: Submit public image URL + instruction
+    C->>T: POST task envelope
+    T->>T: Validate task input + auth cookie
+    T->>B: POST /interfaze/extract-id
+    B->>I: Run typed extraction service
+    I-->>B: Result + cache metadata
+    B-->>T: Structured DTO response
+    T-->>C: Task envelope with status, meta, errors[]
+    C-->>U: Success or failure state
 ```
 
 ## Integration Boundary

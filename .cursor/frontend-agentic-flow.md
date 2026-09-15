@@ -13,6 +13,7 @@ This frontend should stay:
 - easy to extend under interview pressure
 - obvious for AI tools to read and continue
 - aligned with backend contracts and environment-driven runtime settings
+- centered on practical operator workflows rather than documentation-heavy filler surfaces
 
 ## Read First
 
@@ -20,7 +21,7 @@ Before editing frontend behavior, read:
 
 - `frontend/ARCHITECTURE.md`
 - `frontend/app/layout.tsx`
-- `frontend/app/page.tsx`
+- `frontend/app/(app)/page.tsx`
 - `frontend/config/site.ts`
 - `frontend/styles/globals.css`
 - `frontend/README.md`
@@ -111,9 +112,11 @@ If the user is unsure, recommend a concrete screen structure and request/respons
 - prefer familiar product patterns over clever layout experiments unless the user explicitly asks for novelty
 - avoid generic template filler once the project direction is known
 - treat this repository as a SaaS application workspace by default, even when the content is still sparse
+- default the primary protected route toward one working operator flow before expanding architecture or playbook-style screens
 - for time-boxed product work, avoid marketing copy, explanatory panels, and oversized placeholder content
 - prefer minimal task-focused screens that help the user complete the next action fast
 - design like a product designer shipping a real app, not a landing-page generator filling empty space
+- when route budget is limited, replace architecture/demo copy with one real operator workflow before adding more supporting surfaces
 - every screen should have a clear primary action, readable hierarchy, and a reason for each block on the page
 - use text sparingly and intentionally; if a paragraph does not help the user decide or act, cut it
 - align third-party widgets and embedded controls with the surrounding theme using spacing, framing, contrast, and supporting layout
@@ -141,6 +144,8 @@ If the user is unsure, recommend a concrete screen structure and request/respons
 - start from the user task, then choose the smallest UI that supports it well
 - keep the happy path obvious and reduce competing actions
 - error, loading, empty, and success states should feel designed, not appended at the end
+- for AI-backed workflows, expose structured results, request status, retry context, and the natural next step directly in the surface
+- when the primary workflow is task execution, favor a practical console shape: input, validation, run state, structured result, recovery path, and recent runs when useful
 - preserve accessibility basics: contrast, button clarity, focusability, and sensible semantics
 - prefer familiar interaction patterns for auth, forms, dashboards, and CRUD unless the user asks for something novel
 - if a component looks visually imported from another system, restyle the surrounding container so it feels integrated
@@ -225,10 +230,11 @@ For protected app shells and in-product workspace routes inspired by the same pr
 
 - prefer familiar app framing over promotional storytelling
 - keep headings concrete and shorter than on public landing pages
-- show routes, tables, filters, forms, summaries, and next actions early
+- show routes, tables, filters, forms, summaries, results, and next actions early
 - make active navigation, account controls, and primary actions immediately obvious
 - use practical density: enough information to act, not so much chrome that the shell becomes the main event
 - if the layout choice is between expressive and familiar for an operational surface, default to familiar
+- after the shell is credible, invest next in workflow clarity and data handling rather than more decorative refinement
 
 ## Copy Rules
 
@@ -249,6 +255,7 @@ Every async or data-dependent surface needs:
 - empty states with context and a next step
 - error states with plain-language recovery
 - success states with lightweight confirmation
+- if repeated submissions are plausible, include clear retry, duplicate-run, or cached-result behavior in the flow design
 
 Do not ship a polished happy path with silent failure everywhere else.
 

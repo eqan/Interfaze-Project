@@ -25,5 +25,8 @@ async def extract_id_details(
     request: Request,
     _: dict = Depends(require_authenticated_payload),
 ):
-    result = await document_intelligence_service.extract_id_details(payload)
-    return InterfazeIdExtractionResponse(result=result)
+    execution = await document_intelligence_service.extract_id_details(payload)
+    return InterfazeIdExtractionResponse(
+        result=execution.result,
+        meta=execution.meta,
+    )

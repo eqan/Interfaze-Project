@@ -114,6 +114,8 @@ class Settings(BaseSettings):
     interfaze_api_key: str = ""
     interfaze_model_name: str = "interfaze-beta"
     interfaze_base_url: str = ""
+    interfaze_timeout_seconds: int = 20
+    interfaze_retry_attempts: int = 2
     runtime_config_path: str = str(Path(__file__).resolve().parent / "runtime.json")
 
     model_config = SettingsConfigDict(

@@ -10,7 +10,7 @@ Full-stack template for fast interview execution, AI-assisted feature work, and 
 - Cache-ready architecture with in-memory TTL now and Redis-ready abstraction
 - Internal test-token refresh flow for stable authenticated test runs
 - Interfaze-ready document extraction path in the backend for typed vision parsing demos
-- Dynamic Next.js frontend with HeroUI and App Router
+- Dynamic Next.js frontend with HeroUI, App Router, and a typed task console
 
 ## Current Structure
 
@@ -193,6 +193,23 @@ This route is intended as an interview-ready integration example:
 - it only accepts public `https://` image URLs for safer provider handoff
 - it uses a dedicated integration adapter instead of calling the SDK in the controller
 - it returns a structured parsed result for the sample ID fields
+
+The frontend now layers a same-origin task route over that backend endpoint:
+
+```text
+POST /api/tasks/run
+```
+
+Current supported task:
+
+- `extract_id`
+
+This task route gives the product a TypeScript-native execution boundary for:
+
+- request validation
+- auth-cookie forwarding
+- task metadata and request IDs
+- a consistent success/error envelope for the UI
 
 Use `runtime.json` for reusable defaults, especially:
 

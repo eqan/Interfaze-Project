@@ -6,7 +6,7 @@ Read `.cursor/fullstack-agentic-flow.md` first when the request may involve both
 
 ## Mission
 
-This repository is a backend-first project template designed for:
+This repository is a practical task-platform template designed for:
 
 - fast interview implementation
 - AI-assisted feature delivery
@@ -19,13 +19,13 @@ Optimize for reuse, consistency, and future velocity. Do not solve backend reque
 
 Before editing backend behavior, read these files:
 
-- `Backend/ARCHITECTURE.md`
-- `Backend/app/app.py`
-- `Backend/app/config/settings.py`
-- `Backend/app/config/config.py`
-- `Backend/app/database.py`
-- `Backend/app/config/runtime.json`
-- `Backend/tests/README.md`
+- `backend/ARCHITECTURE.md`
+- `backend/app/app.py`
+- `backend/app/config/settings.py`
+- `backend/app/config/config.py`
+- `backend/app/database.py`
+- `backend/app/config/runtime.json`
+- `backend/tests/README.md`
 
 When changing a specific domain, also read its controller, service, DTOs, models, and tests.
 
@@ -46,7 +46,7 @@ Rules:
 
 ## Backend Structure
 
-The backend is organized by domain under `Backend/app/`:
+The backend is organized by domain under `backend/app/`:
 
 - `chatbot/`: chat endpoints, SSE flow, LLM orchestration, chat persistence
 - `users/`: Google auth exchange, JWT verification, user persistence
@@ -60,13 +60,15 @@ The backend is organized by domain under `Backend/app/`:
 - `prompts/`: prompt loading and prompt assets
 - `database.py`: DB lifecycle helpers including `session_scope()`
 
+When the product direction is AI-assisted workflows or deterministic task execution, prefer modeling the backend like a small task platform rather than a bag of unrelated sample endpoints.
+
 ## Source Of Truth
 
 Configuration has two layers:
 
-1. `Backend/app/config/runtime.json`
+1. `backend/app/config/runtime.json`
    Template defaults for reusable runtime behavior.
-2. `Backend/.env`
+2. `backend/.env`
    Environment-specific overrides for development, staging, and production.
 
 Rules:
@@ -80,10 +82,10 @@ Rules:
 
 The canonical startup flow is:
 
-1. `Backend/main.py`
-2. `Backend/app/app.py`
-3. `Backend/app/config/settings.py`
-4. `Backend/app/config/config.py`
+1. `backend/main.py`
+2. `backend/app/app.py`
+3. `backend/app/config/settings.py`
+4. `backend/app/config/config.py`
 
 When changing startup behavior:
 
@@ -107,10 +109,20 @@ When asked to add a backend feature:
 9. Update persistence shape and Alembic migration if required.
 10. Implement business logic in the service layer.
 11. Keep controllers thin and delegate to services.
-12. Add shared concerns such as caching, rate limiting, feature flags, or runtime config when relevant.
-13. Add tests under `Backend/tests/`.
+12. Add shared concerns such as caching, idempotency, retries, timeouts, request tracing, feature flags, or runtime config when relevant.
+13. Add tests under `backend/tests/`.
 14. Document the feature in the same use-case area whenever possible, using Mermaid diagrams as the primary format.
 15. Update shared docs if behavior, setup, or architecture changed.
+
+When building multi-step or AI-backed flows, prefer a stable task contract with:
+
+- task identifier
+- typed input
+- structured output
+- meta such as request ID, provider, cached state, or timing
+- structured errors
+
+When the expected delivery stack is Next.js and TypeScript, design backend changes so they can support a lightweight TS-native route boundary or task runner without rethinking the contract later.
 
 Create a new domain only when the concept is truly separate from existing ones.
 
@@ -137,7 +149,8 @@ The 3 questions should usually cover:
 Controllers should:
 
 - define routes and request/response shapes
-- apply shared auth dependencies from `Backend/app/dependencies/` when auth is required
+- apply shared auth dependencies from `backend/app/dependencies/` when auth is required
+- preserve deterministic request/response shapes that frontend and AI tooling can consume safely
 - apply rate limits from `settings.runtime.rate_limits`
 - delegate to a service
 - translate exceptional states into HTTP responses when needed
@@ -159,10 +172,12 @@ Services should:
 - call shared infra helpers instead of duplicating setup
 - use helper methods for parsing, validation, mapping, and retries
 - keep provider-specific logic explicit and localized
+- prefer deterministic outputs over raw provider passthroughs
+- make retry, timeout, cache-hit, and failure behavior explicit when provider-backed work is involved
 
 For new code:
 
-- prefer `session_scope()` from `Backend/app/database.py`
+- prefer `session_scope()` from `backend/app/database.py`
 - do not copy older `Session.remove()` boilerplate into new services
 - if touching legacy service code, improve local session handling where practical
 
@@ -172,8 +187,8 @@ Current stack:
 
 - PostgreSQL
 - SQLAlchemy ORM
-- shared engine in `Backend/app/config/config.py`
-- `session_scope()` in `Backend/app/database.py`
+- shared engine in `backend/app/config/config.py`
+- `session_scope()` in `backend/app/database.py`
 
 Guidelines:
 
@@ -198,12 +213,13 @@ When adding or changing a backend feature, check whether it needs:
 - a cache TTL
 - a DB pool setting
 - a server/runtime setting
+- an idempotency or timeout setting
 
 If yes, extend the typed settings rather than scattering raw literals.
 
 Canonical cache entrypoint:
 
-- `Backend/app/utils/cache.py`
+- `backend/app/utils/cache.py`
 
 Current cache posture:
 
@@ -223,11 +239,12 @@ Current integrations include:
 
 Rules:
 
-- use provider adapters from `Backend/app/integrations/`
-- let those adapters rely on lazy client access patterns from `Backend/app/config/config.py`
+- use provider adapters from `backend/app/integrations/`
+- let those adapters rely on lazy client access patterns from `backend/app/config/config.py`
 - missing optional credentials should degrade gracefully, not crash startup
 - keep provider wiring out of controllers
 - if integration complexity grows, extract adapter-style helpers or an `integrations/` module
+- map provider failures into stable application errors instead of leaking raw SDK behavior across the app boundary
 
 ## API And DTO Rules
 
@@ -236,11 +253,12 @@ Rules:
 - keep DTOs strict rather than permissive
 - keep payload names stable once introduced
 - return structured responses that are easy for frontend and AI tooling to consume
+- when a workflow is user-triggered and repeatable, include structured metadata and explicit failure semantics
 
 For chatbot work:
 
 - preserve the SSE event contract unless intentionally versioning it
-- keep prompt loading centralized through `Backend/app/prompts/load_prompt.py`
+- keep prompt loading centralized through `backend/app/prompts/load_prompt.py`
 
 ## Testing Rules
 
@@ -251,27 +269,28 @@ Patterns:
 - use JSON-driven test cases for endpoint permutations
 - use Python tests for multi-step flows, SSE, auth, and edge cases
 - if adding a route, add at least one success-path and one failure-path test
+- for AI-backed or provider-backed features, test output shape, invalid input, duplicate idempotency-key behavior when relevant, timeout/retry behavior, and hard failure mapping
 - if changing a shared contract, update all affected tests
 - prefer documenting the feature in the same use-case folder after tests are added
 
 Test locations:
 
-- `Backend/tests/usecases/<domain>/`
-- `Backend/tests/helpers/`
+- `backend/tests/usecases/<domain>/`
+- `backend/tests/helpers/`
 
 Documentation location preference:
 
-- first choice: the same use-case folder in `Backend/tests/usecases/<domain>/`
-- second choice: shared docs such as `Backend/tests/README.md`, `Backend/ARCHITECTURE.md`, or `readme.md`
+- first choice: the same use-case folder in `backend/tests/usecases/<domain>/`
+- second choice: shared docs such as `backend/tests/README.md`, `backend/ARCHITECTURE.md`, or `readme.md`
 
 ## Documentation Rules
 
 When backend behavior changes, update the relevant docs in the same task:
 
 - `readme.md`
-- `Backend/ARCHITECTURE.md`
-- `Backend/tests/README.md`
-- `Backend/.env.example`
+- `backend/ARCHITECTURE.md`
+- `backend/tests/README.md`
+- `backend/.env.example`
 
 The repo should always read like a current template, not an outdated demo artifact.
 
@@ -284,9 +303,9 @@ Prefer for new work:
 - `create_app()` bootstrap pattern
 - typed settings plus typed runtime config
 - `.env` overrides for deployment-specific values
-- shared auth dependencies under `Backend/app/dependencies/`
+- shared auth dependencies under `backend/app/dependencies/`
 - lazy optional clients
-- provider adapters under `Backend/app/integrations/`
+- provider adapters under `backend/app/integrations/`
 - `session_scope()` for DB lifecycle
 - shared cache abstraction
 - runtime-sourced rate limits

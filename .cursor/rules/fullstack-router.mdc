@@ -1,7 +1,7 @@
 ---
 description: Route feature work through the top-level full-stack instruction file before narrowing into backend or frontend execution
 globs:
-  - Backend/**
+  - backend/**
   - frontend/**
   - readme.md
 alwaysApply: true
@@ -21,6 +21,8 @@ For feature requests:
 - confirm the user flow plus API inputs and outputs
 - draft a zoomed-out Mermaid architecture diagram of the full backend/frontend flow before implementing meaningful changes
 - add a focused Mermaid diagram for the particular backend or frontend slice being modified when the task is non-trivial
+- treat the repository as a practical task platform by default, not a showcase scaffold
+- bias toward deterministic product workflows, typed task contracts, and reliability behavior over explanatory demo surfaces
 - reuse existing backend modules and frontend patterns when relevant
 - do backend contract work before frontend integration when both stacks change
 - verify both stacks before finishing

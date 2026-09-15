@@ -10,6 +10,7 @@ This repository should be treated as a SaaS application foundation designed for:
 - AI-assisted feature delivery
 - predictable architecture growth
 - minimal duplication across frontend and backend work
+- deterministic task-platform behavior over template-showcase behavior
 
 The first responsibility is to route the task correctly before implementation starts.
 
@@ -18,7 +19,7 @@ The first responsibility is to route the task correctly before implementation st
 Before developing a feature, read:
 
 - `readme.md`
-- `Backend/ARCHITECTURE.md`
+- `backend/ARCHITECTURE.md`
 - `frontend/ARCHITECTURE.md`
 - `.cursor/backend-agentic-flow.md`
 - `.cursor/frontend-agentic-flow.md`
@@ -68,6 +69,9 @@ If the user does not know the exact API shape, recommend one before implementati
 - keep backend business logic in services
 - keep frontend presentation logic in reusable sections
 - keep integration boundaries explicit between the two stacks
+- bias toward one real operator workflow before adding more architecture/demo surfaces
+- prefer typed task envelopes, deterministic outputs, idempotency, and observable failure handling when building AI-backed or multi-step product flows
+- prefer replacing documentation-heavy route budget with one real operator workflow when the product still lacks a concrete primary task surface
 - treat utility routes such as auth, onboarding gates, and setup screens like product workflows, not marketing surfaces
 - make cache and freshness rules explicit when data crosses the backend/frontend boundary
 - keep secrets and durable auth trust on the backend side whenever the architecture allows it
@@ -75,6 +79,8 @@ If the user does not know the exact API shape, recommend one before implementati
 - for time-boxed app work, avoid placeholder marketing copy and verbose explanatory UI
 - when frontend work is involved, prefer practical product UX over decorative layout filler
 - when frontend work is involved, design the end-to-end flow first and ensure loading, empty, error, success, and recovery states are part of the feature rather than follow-up polish
+- when the likely delivery stack is Next.js and TypeScript, prefer adding or extending a TypeScript-native task boundary before forcing all workflow logic through a Python-first path
+- once a screen has cleared the trust and usability baseline, deprioritize extra visual polish in favor of workflow depth, reliability, and test coverage
 - before implementing a meaningful change, force a quick systems view first: one zoomed-out diagram for the full flow and one focused diagram for the touched slice when needed
 
 ## Pre-Implementation Architecture Sketch
@@ -118,6 +124,7 @@ Before finishing a feature:
 - frontend lint, typecheck, and build should pass unless blocked
 - frontend output should be visually reviewed for hierarchy, spacing, theme alignment, and state completeness
 - cache behavior should match data sensitivity, freshness needs, and logout/role-change expectations
+- AI-backed flows should have explicit tests for valid output, invalid input, duplicate idempotency keys when relevant, and at least one failure mode such as timeout or provider error
 - shared docs should reflect the implemented flow
 - Mermaid diagrams should be updated when architecture or request flow changed
 - Mermaid and Markdown architecture docs should pass the repo-root doc validation commands when they were touched

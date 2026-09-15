@@ -15,52 +15,37 @@ import type {
 } from "@/types/site";
 
 export const siteConfig: SiteConfig = {
-  name: "Project Template",
-  productTagline: "Practical SaaS workspace",
+  name: "Interfaze Project",
+  productTagline: "Task execution workspace",
   description:
-    "A SaaS-ready Next.js frontend shaped for protected routes, predictable product surfaces, and clean backend integration.",
+    "A practical Next.js workspace for running typed extraction tasks, reviewing results, and extending product-ready integrations.",
   navItems: [
     {
-      label: "Overview",
+      label: "Console",
       href: "/",
-      description: "Dashboard, modules, and immediate next actions.",
-    },
-    {
-      label: "Architecture",
-      href: "/architecture",
-      description: "Shell boundaries, route groups, and rendering ownership.",
-    },
-    {
-      label: "Playbook",
-      href: "/playbook",
-      description: "Delivery sequence for new routes, states, and contracts.",
-    },
-    {
-      label: "Backend API",
-      href: "/backend-api",
-      description: "Frontend-facing contracts for auth, stats, tickets, and chat.",
+      description: "Run typed extraction tasks and inspect recent results.",
     },
   ] satisfies NavItem[],
   proofMetrics: [
     {
-      value: "4",
-      label: "Core routes",
-      note: "Overview, architecture, playbook, and backend mapping now share the same workspace pattern.",
+      value: "1",
+      label: "Live workflow",
+      note: "The home route now centers on one real extraction task instead of only acting as a documentation dashboard.",
     },
     {
       value: "1",
       label: "Auth path",
-      note: "Public sign-in stays isolated so product routes keep one protected shell and one clear trust boundary.",
+      note: "Public sign-in stays isolated so task execution only happens inside the guarded workspace.",
     },
     {
-      value: "3",
-      label: "Next modules",
-      note: "Stats, ticketing, and chat can land without redesigning the shell again.",
+      value: "1",
+      label: "Provider route",
+      note: "A typed task boundary now proxies to the backend document extraction route through one controlled path.",
     },
     {
-      value: "0",
-      label: "Filler sections",
-      note: "Every block should orient, prove readiness, or move the next implementation decision forward.",
+      value: "4",
+      label: "Cache modes",
+      note: "Always fresh, short-lived, cacheable, and browser-sticky still cover the main state decisions across the app.",
     },
   ] satisfies ProofMetric[],
   workspaceSignals: [
@@ -87,13 +72,13 @@ export const siteConfig: SiteConfig = {
   ] satisfies WorkspaceSignal[],
   productAreas: [
     {
-      title: "Workspace overview",
+      title: "Task console",
       href: "/",
-      status: "Start here",
+      status: "Primary workflow",
       description:
-        "Use this route as the operator dashboard for module readiness, route status, and immediate next actions.",
+        "Use this route to submit one deterministic extraction task, inspect typed results, and review recent runs.",
       outcome:
-        "This becomes the baseline for real dashboard modules, launch checklists, and operator summaries.",
+        "This becomes the baseline for future operator workflows instead of leaving the app as a documentation shell.",
     },
     {
       title: "Architecture guide",
@@ -251,6 +236,12 @@ export const siteConfig: SiteConfig = {
       route: "/ingestion/*",
       description:
         "Provides room for scrape, indexing, and search tooling without changing the app frame again.",
+    },
+    {
+      title: "Document intelligence",
+      route: "/interfaze/extract-id",
+      description:
+        "Runs typed document extraction through the Interfaze integration with auth, caching, and idempotency context.",
     },
     {
       title: "Chatbot",

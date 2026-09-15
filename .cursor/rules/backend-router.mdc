@@ -1,11 +1,11 @@
 ---
 description: Route backend work to the shared backend instruction file and follow existing architecture and extension patterns
 globs:
-  - Backend/**/*.py
-  - Backend/**/*.json
-  - Backend/**/*.md
-  - Backend/run.sh
-  - Backend/.env.example
+  - backend/**/*.py
+  - backend/**/*.json
+  - backend/**/*.md
+  - backend/run.sh
+  - backend/.env.example
   - readme.md
 alwaysApply: false
 ---
@@ -18,8 +18,9 @@ For backend feature requests, the parent instructions include a mandatory clarif
 - confirm or recommend API inputs and outputs before implementation
 - reuse an existing module/use case when relevant
 - implement with strict DTOs, services, and thin controllers
-- optimize with shared concerns like caching and rate limiting when relevant
-- add tests under `Backend/tests/`
+- optimize with shared concerns like caching, idempotency, retries, timeouts, request tracing, and rate limiting when relevant
+- prefer practical task or workflow endpoints over generic sample routes when the product direction calls for them
+- add tests under `backend/tests/`
 - document the feature in the same use-case area when possible
 
 For backend documentation work, prefer Mermaid-first architecture docs with concise supporting text.

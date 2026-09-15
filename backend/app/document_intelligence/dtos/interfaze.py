@@ -14,6 +14,12 @@ class InterfazeIdExtractionRequest(BaseModel):
         max_length=500,
         description="Short instruction sent alongside the ID image.",
     )
+    idempotency_key: str | None = Field(
+        default=None,
+        min_length=8,
+        max_length=128,
+        description="Stable key used to safely retry or deduplicate the same extraction request.",
+    )
 
     @field_validator("image_url")
     @classmethod
@@ -52,7 +58,19 @@ class InterfazeIdExtractionResult(BaseModel):
     )
 
 
+class InterfazeIdExtractionMeta(BaseModel):
+    provider: str = "interfaze"
+    cached: bool = False
+    idempotency_key: str
+
+
+class InterfazeIdExtractionExecution(BaseModel):
+    result: InterfazeIdExtractionResult
+    meta: InterfazeIdExtractionMeta
+
+
 class InterfazeIdExtractionResponse(BaseModel):
     status: bool = True
     message: str = "Interfaze extraction completed"
     result: InterfazeIdExtractionResult
+    meta: InterfazeIdExtractionMeta

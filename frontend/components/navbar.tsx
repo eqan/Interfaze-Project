@@ -14,6 +14,7 @@ export function Navbar() {
   const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { signOut, status, user } = useAuth();
+  const hasMultipleRoutes = siteConfig.navItems.length > 1;
 
   function handleSignOut() {
     signOut();
@@ -53,24 +54,26 @@ export function Navbar() {
             </div>
           </NextLink>
 
-          <div className="flex items-center gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-1">
-            {siteConfig.navItems.map((item) => {
-              return (
-                <NextLink
-                  key={item.href}
-                  className={clsx(
-                    "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
-                    isActivePath(item.href)
-                      ? "bg-accent text-white shadow-[0_8px_22px_rgba(79,141,247,0.28)]"
-                      : "text-muted hover:bg-[var(--surface-strong)] hover:text-foreground",
-                  )}
-                  href={item.href}
-                >
-                  {item.label}
-                </NextLink>
-              );
-            })}
-          </div>
+          {hasMultipleRoutes ? (
+            <div className="flex items-center gap-1 rounded-xl border border-[var(--line)] bg-[var(--surface)] p-1">
+              {siteConfig.navItems.map((item) => {
+                return (
+                  <NextLink
+                    key={item.href}
+                    className={clsx(
+                      "rounded-lg px-4 py-2 text-sm font-medium transition-colors",
+                      isActivePath(item.href)
+                        ? "bg-accent text-white shadow-[0_8px_22px_rgba(79,141,247,0.28)]"
+                        : "text-muted hover:bg-[var(--surface-strong)] hover:text-foreground",
+                    )}
+                    href={item.href}
+                  >
+                    {item.label}
+                  </NextLink>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
 
         <div className="ml-auto hidden items-center gap-3 md:flex">
@@ -148,26 +151,33 @@ export function Navbar() {
       {isMenuOpen ? (
         <div className="border-t border-[var(--line)] bg-[rgba(248,250,252,0.98)] px-4 py-4 md:hidden">
           <div className="mx-auto flex w-full max-w-6xl flex-col gap-2">
-            {siteConfig.navItems.map((item) => {
-              return (
-                <NextLink
-                  key={item.href}
-                  className={clsx(
-                    "rounded-xl px-4 py-3 text-sm transition-colors",
-                    isActivePath(item.href)
-                      ? "bg-accent text-white"
-                      : "border border-[var(--line)] bg-[var(--surface)] text-foreground",
-                  )}
-                  href={item.href}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <span className="block font-semibold">{item.label}</span>
-                  <span className={clsx("mt-1 block text-sm", isActivePath(item.href) ? "text-white/85" : "text-muted")}>
-                    {item.description}
-                  </span>
-                </NextLink>
-              );
-            })}
+            {hasMultipleRoutes
+              ? siteConfig.navItems.map((item) => {
+                  return (
+                    <NextLink
+                      key={item.href}
+                      className={clsx(
+                        "rounded-xl px-4 py-3 text-sm transition-colors",
+                        isActivePath(item.href)
+                          ? "bg-accent text-white"
+                          : "border border-[var(--line)] bg-[var(--surface)] text-foreground",
+                      )}
+                      href={item.href}
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      <span className="block font-semibold">{item.label}</span>
+                      <span
+                        className={clsx(
+                          "mt-1 block text-sm",
+                          isActivePath(item.href) ? "text-white/85" : "text-muted",
+                        )}
+                      >
+                        {item.description}
+                      </span>
+                    </NextLink>
+                  );
+                })
+              : null}
 
             {user ? (
               <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-3">
