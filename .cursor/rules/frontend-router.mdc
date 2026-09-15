@@ -1,5 +1,5 @@
 ---
-description: Route frontend work to the shared frontend instruction file and preserve the existing UI architecture and extension patterns
+description: Route frontend work to the shared frontend instruction file and preserve UI, same-origin API, server workflow, and test patterns
 globs:
   - frontend/**/*.ts
   - frontend/**/*.tsx
@@ -9,14 +9,19 @@ globs:
 alwaysApply: false
 ---
 
-Use the full-stack parent instructions first, then the frontend child instructions whenever the task involves frontend code, styling, route composition, component design, frontend docs, or backend integration from the UI.
+Use the full-stack parent instructions first, then the frontend child instructions whenever the task involves frontend UI, styling, route composition, same-origin API routes, server workflows under `lib/server`, frontend tests, frontend docs, or backend integration from the UI.
 
 For frontend feature requests, the parent instructions include a clarification-first workflow:
 
 - ask 3 important questions when the request is ambiguous
+- confirm whether the work is UI-only, Next.js task/API work, or both
 - confirm route, interaction flow, and UI states before implementation
-- confirm or recommend API inputs and outputs when data is involved
-- reuse an existing section or component pattern when relevant
+- confirm or recommend API inputs and outputs when data or task execution is involved
+- prefer extending `app/api` + `lib/server` for TypeScript-native task workflows instead of adding a Python pass-through by default
+- keep App Router handlers thin and put validation, retries, caching, and provider calls in `lib/server`
+- keep browser callers in `lib/api` and shared envelopes in `types`
+- reuse an existing section, API helper, or server workflow pattern when relevant
+- add or update tests under `frontend/tests/` for server workflows and reliability paths
 - keep the visual language consistent
 - design pages like real product UI, not filler-heavy showcase screens
 - treat the repo as a SaaS workspace by default rather than a marketing template
@@ -27,6 +32,7 @@ For frontend feature requests, the parent instructions include a clarification-f
 - avoid decorative filler, nested cards, and generic hero layouts when building actual product pages
 - keep auth and access pages especially lean: utility-first layout, one primary action, no promotional card grids unless explicitly requested
 - default to safer frontend persistence: do not drop secrets into browser storage and be explicit about cache freshness for each new data surface
+- keep provider secrets server-only; never move `INTERFAZE_*` into `NEXT_PUBLIC_*`
 - treat browser caching as a product decision with scenarios: `no-store` for auth and user-sensitive data, short-lived or focus-based revalidation for dashboards and search, and longer caching only for public reference content
 - for public-facing SaaS pages, prefer a predictable structure with clear hero, proof, product demo, stepwise explanation, and repeated CTA rather than one-off layout experiments
 - for protected app surfaces, default to a familiar top-nav SaaS shell, compact headers, light neutral surfaces, and practical page flow over showcase-style layouts
@@ -34,7 +40,7 @@ For frontend feature requests, the parent instructions include a clarification-f
 - avoid persistent sidebars and heavy decorative chrome unless the workflow clearly benefits from them
 - commit to a clear aesthetic direction and avoid generic AI-generated frontend patterns
 - self-review hierarchy, spacing, states, and mobile fit before finishing
-- verify with lint, typecheck, and build
+- verify with lint, typecheck, test, and build
 
 For frontend documentation work, prefer Mermaid-first architecture docs with concise supporting text.
 

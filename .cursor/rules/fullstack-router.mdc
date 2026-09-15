@@ -23,9 +23,9 @@ For feature requests:
 - add a focused Mermaid diagram for the particular backend or frontend slice being modified when the task is non-trivial
 - treat the repository as a practical task platform by default, not a showcase scaffold
 - bias toward deterministic product workflows, typed task contracts, and reliability behavior over explanatory demo surfaces
-- reuse existing backend modules and frontend patterns when relevant
-- do backend contract work before frontend integration when both stacks change
-- verify both stacks before finishing
+- reuse existing backend modules, frontend patterns, or Next.js task workflows when relevant
+- define the owning contract first: FastAPI when durable backend state changes, frontend task contracts when the workflow is TypeScript-native
+- verify the touched stacks before finishing
 
 Read and follow:
 

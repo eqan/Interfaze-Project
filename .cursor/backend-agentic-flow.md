@@ -122,7 +122,7 @@ When building multi-step or AI-backed flows, prefer a stable task contract with:
 - meta such as request ID, provider, cached state, or timing
 - structured errors
 
-When the expected delivery stack is Next.js and TypeScript, design backend changes so they can support a lightweight TS-native route boundary or task runner without rethinking the contract later.
+When the expected delivery stack is Next.js and TypeScript, prefer supporting or consuming the frontend-owned task boundary under `frontend/app/api` and `frontend/lib/server` instead of re-implementing the same AI/operator workflow in Python by default.
 
 Create a new domain only when the concept is truly separate from existing ones.
 
