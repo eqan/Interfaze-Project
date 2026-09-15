@@ -14,7 +14,7 @@ export default function BackendApiPage() {
         ]}
         asideDescription="A practical product shell needs concrete UI primitives too: tables, pagination, selects, dialogs, inputs, and predictable state handling around them."
         asideTitle="Practical UI posture"
-        description="The frontend is prepared for backend-backed routes by centralizing runtime checks, auth requests, cache decisions, and reusable route composition."
+        description="The frontend now owns the extraction workflow in its server layer while keeping auth requests, cache decisions, and route composition predictable."
         eyebrow="Integration"
         heading="Keep the API edge practical, typed, and hard to misuse."
         metrics={[

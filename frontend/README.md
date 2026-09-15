@@ -34,6 +34,12 @@ Copy `.env.example` to `.env.local`:
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-oauth-client-id.apps.googleusercontent.com
+INTERFAZE_API_KEY=your-interfaze-api-key
+INTERFAZE_MODEL_NAME=interfaze-beta
+INTERFAZE_BASE_URL=
+INTERFAZE_TIMEOUT_MS=20000
+INTERFAZE_RETRY_ATTEMPTS=2
+INTERFAZE_RESULT_CACHE_TTL_SECONDS=3600
 ```
 
 The frontend now protects the app behind Google sign-in. `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
@@ -44,6 +50,10 @@ the frontend app.
 outside local development, because frontend auth requests send bearer tokens to that
 API boundary.
 
+`INTERFAZE_API_KEY` is required for the extraction console. The `/api/tasks/run` route
+now executes the Interfaze workflow inside Next.js instead of proxying document
+extraction through the Python backend.
+
 ## Commands
 
 ```bash
@@ -51,6 +61,7 @@ cd frontend
 npm run dev
 npm run lint
 npm run lint:fix
+npm run test
 npm run typecheck
 npm run build
 ```

@@ -12,8 +12,9 @@ This frontend should stay:
 - visually strong out of the box
 - easy to extend under interview pressure
 - obvious for AI tools to read and continue
-- aligned with backend contracts and environment-driven runtime settings
+- aligned with typed contracts and environment-driven runtime settings
 - centered on practical operator workflows rather than documentation-heavy filler surfaces
+- able to own same-origin task APIs, server workflows, and frontend tests when the product path is TypeScript-native
 
 ## Read First
 
@@ -26,7 +27,17 @@ Before editing frontend behavior, read:
 - `frontend/styles/globals.css`
 - `frontend/README.md`
 
-If changing a specific route, also read the route page and any reused section components.
+If changing a specific UI route, also read the route page and any reused section components.
+
+If changing task APIs, server workflows, provider adapters, or frontend tests, also read:
+
+- `frontend/app/api/tasks/run/route.ts`
+- `frontend/lib/server/tasks/run-task.ts`
+- `frontend/lib/server/interfaze.ts`
+- `frontend/lib/server/task-cache.ts`
+- `frontend/lib/api/tasks.ts`
+- `frontend/types/task.ts`
+- `frontend/tests/server/task-run.test.ts`
 
 ## Documentation Style
 
@@ -43,33 +54,46 @@ Rules:
 
 The frontend is organized around:
 
-- `app/`: route pages and layout composition
+- `app/`: UI route pages, layout composition, and same-origin API routes under `app/api/`
 - `components/`: reusable visual building blocks
 - `config/`: site metadata and reusable content maps
+- `lib/api/`: browser/client typed callers for backend or same-origin routes
+- `lib/server/`: Next.js server-only workflow logic, provider adapters, caches, and env helpers
+- `types/`: shared frontend contracts such as task envelopes and auth shapes
 - `styles/`: global visual tokens and theme glue
+- `tests/`: Node test runner coverage for server workflows and other non-UI logic
+
+Ownership split:
+
+- FastAPI still owns durable auth exchange, user persistence, and backend domains that live under `backend/`
+- Next.js owns TypeScript-native task execution for flows like `/api/tasks/run`, including validation, retries, idempotency cache, and Interfaze provider calls
+- Prefer extending the Next.js task boundary for new AI/operator workflows when the stack is already TypeScript-first, instead of forcing every workflow through Python
 
 ## Feature Workflow
 
 When asked to add a frontend feature:
 
 1. Ask exactly 3 important clarification questions when the request is ambiguous.
-2. Confirm the route, actor, and desired interaction flow.
-3. Confirm the API inputs, outputs, and UI states when backend data is involved.
-4. Reuse an existing route section or component pattern when it fits.
-5. Create a new section or route only when the concept is genuinely separate.
-6. Keep server components as the default starting point.
-7. Add client components only for interactivity, browser APIs, or local state.
-8. Add loading, empty, success, and error states deliberately.
-9. Update docs when structure, patterns, or flows change.
-10. Verify with `npm run lint`, `npm run typecheck`, and `npm run build`.
+2. Confirm whether the work is UI-only, same-origin task/API work, or both.
+3. Confirm the route, actor, and desired interaction flow.
+4. Confirm the API inputs, outputs, failure states, and UI states when data or task execution is involved.
+5. Reuse an existing route section, API helper, or server workflow pattern when it fits.
+6. Create a new section, API route, or server module only when the concept is genuinely separate.
+7. Keep server components as the default starting point for pages.
+8. Add client components only for interactivity, browser APIs, or local state.
+9. Keep App Router handlers thin; put validation, provider calls, retries, and caching in `lib/server/`.
+10. Add loading, empty, success, and error states deliberately for UI work.
+11. Add or update frontend tests under `frontend/tests/` for server workflows, task contracts, and failure modes.
+12. Update docs when structure, patterns, or flows change.
+13. Verify with `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
 
 ## Project Fit Check
 
-Before designing or changing UI:
+Before designing or changing UI or frontend server behavior:
 
-- scan the existing routes, components, tokens, styles, docs, and tests first
-- detect the framework, styling system, and component patterns before inventing new primitives
-- follow the repo's current conventions for copy, icons, accessibility, and responsiveness
+- scan the existing routes, API handlers, `lib/server` modules, components, tokens, styles, docs, and tests first
+- detect the framework, styling system, component patterns, and task-contract patterns before inventing new primitives
+- follow the repo's current conventions for copy, icons, accessibility, responsiveness, and typed envelopes
 - if design-system rules are missing, infer from the current product surface and keep the inference consistent
 - merge any route-specific checklist with these rules instead of replacing it
 
@@ -100,10 +124,52 @@ Choose one direction and execute it consistently.
 The 3 questions should usually cover:
 
 - the exact screen or workflow to build
-- the API or data contract shape
-- important constraints such as auth, responsiveness, caching, or feature flags
+- whether the contract lives in a Next.js task route, a FastAPI endpoint, or both
+- important constraints such as auth, responsiveness, caching, idempotency, retries, or feature flags
 
 If the user is unsure, recommend a concrete screen structure and request/response flow before implementation.
+
+## Server Route And Task Workflow Rules
+
+When the feature needs a same-origin API or AI-backed operator workflow:
+
+- prefer `app/api/**` route handlers as thin HTTP adapters
+- put validation, orchestration, retries, timeouts, and caching in `lib/server/`
+- keep browser callers in `lib/api/` and shared envelopes in `types/`
+- do not scatter provider SDK calls or idempotency logic across page components
+- keep secrets and provider config in server-only env helpers such as `lib/server/interfaze-env.ts`
+- never expose `INTERFAZE_*` or other server secrets through `NEXT_PUBLIC_*`
+- reuse the existing task envelope shape: typed input, structured result, meta, and `errors[]`
+- make auth gating explicit in the route or workflow context
+- make retry, timeout, cache-hit, invalid-request, and provider-failure behavior explicit and testable
+- inject provider/cache/time/uuid dependencies in workflow functions so unit tests can stay deterministic
+- call FastAPI only when the feature truly needs backend persistence, auth exchange, or an existing Python domain
+
+Canonical task flow today:
+
+1. UI console submits through `lib/api/tasks.ts`
+2. `POST /api/tasks/run` authenticates via auth cookie and delegates
+3. `lib/server/tasks/run-task.ts` validates, caches, retries, and executes
+4. `lib/server/interfaze.ts` talks to the provider
+5. response returns a typed task envelope to the UI
+
+## Testing Rules
+
+Frontend tests live under `frontend/tests/` and run with:
+
+```bash
+cd frontend
+npm test
+```
+
+Rules:
+
+- add tests for new or changed server workflows, task contracts, and reliability behavior
+- cover valid success, invalid input, at least one provider failure mode, and idempotent/cached replay when relevant
+- prefer testing `lib/server` handlers directly with injected fakes over brittle full-browser setup
+- keep tests deterministic: no live provider calls, no wall-clock flakiness, no shared mutable cache leftovers
+- colocate by concern, for example `tests/server/` for workflow and provider-adjacent logic
+- treat `npm test` as required verification for frontend API/server work, not optional polish
 
 ## Design Rules
 
@@ -313,15 +379,20 @@ Stop and revise when you see:
 
 ## Data And Integration Rules
 
-- keep backend calls out of leaf presentation components
-- centralize future API access in a dedicated typed layer
+- keep backend and same-origin task calls out of leaf presentation components
+- centralize browser/client access in `lib/api/`
+- centralize server-only workflow logic in `lib/server/`
+- keep shared request/response shapes in `types/`
 - use `.env.local` for environment-specific frontend settings
-- keep frontend shapes aligned with backend DTOs
+- use public env only for browser-safe values such as `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
+- keep server secrets such as `INTERFAZE_API_KEY` server-only
+- align UI view models with the owning contract: FastAPI DTOs for backend domains, frontend task types for `/api/tasks/*`
 - validate public runtime values early and fail loudly on unsafe API origins or malformed config
 - do not persist bearer tokens, refresh tokens, or other secrets in `localStorage` or `sessionStorage` unless the user explicitly accepts that tradeoff
 - treat browser-readable cookies as a weaker baseline than `HttpOnly` backend-managed session cookies
 - prefer one source of truth for auth persistence instead of duplicating session data across cookies, storage, and in-memory state
 - assume any user-scoped payload can become sensitive once auth, billing, support, or admin features arrive
+- when a workflow is TypeScript-native, extend the Next.js task route instead of adding a Python pass-through by default
 
 ## Security Baseline
 
@@ -336,12 +407,13 @@ Stop and revise when you see:
 
 ## Caching And Freshness
 
-- decide cache strategy from data sensitivity and freshness needs before writing fetch code
+- decide cache strategy from data sensitivity and freshness needs before writing fetch or workflow code
 - use `no-store` for auth, session verification, permissions, billing, admin data, one-time tokens, and anything that can become stale or unsafe if replayed
 - prefer server or framework cache controls over ad hoc browser storage when the data is not user-authored
+- for task workflows, use explicit server-side idempotency/result caches such as `lib/server/task-cache.ts` rather than browser storage
 - do not cache personalized API payloads in shared browser storage by default
 - use browser storage for drafts, dismissed UI state, recent filters, and other non-secret convenience state only when that persistence helps the user
-- document the freshness expectation when adding a new data surface: live, near-live, session-sticky, or static
+- document the freshness expectation when adding a new data surface: live, near-live, session-sticky, idempotent-replay, or static
 - if the user does not need instant freshness, define an intentional revalidation trigger instead of fetching on every render
 
 ## Browser Caching Scenarios
@@ -368,13 +440,16 @@ Stop and revise when you see:
 Before finishing frontend work, verify:
 
 - clarification happened when the request was ambiguous
+- UI-only vs same-origin task/API ownership was chosen deliberately
 - route and state flow are clear
-- an existing component pattern was reused when relevant
+- an existing component, API helper, or server workflow pattern was reused when relevant
 - new UI works on mobile and desktop
-- the screen passes the Visual Review section above
+- the screen passes the Visual Review section above when UI changed
 - copy is concise and task-focused
 - components align with the established theme and spacing system
+- server routes stayed thin and workflow logic stayed in `lib/server/`
+- task or API changes include tests for success, invalid input, and at least one failure or cache path when relevant
 - cache mode matches the surface: auth-sensitive data is fresh, static reference data is not over-fetched, and browser storage is justified
 - auth/session persistence does not duplicate secrets across multiple browser storage layers without a deliberate reason
 - docs are aligned
-- lint, typecheck, and build pass unless blocked
+- lint, typecheck, test, and build pass unless blocked

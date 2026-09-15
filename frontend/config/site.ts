@@ -40,7 +40,7 @@ export const siteConfig: SiteConfig = {
     {
       value: "1",
       label: "Provider route",
-      note: "A typed task boundary now proxies to the backend document extraction route through one controlled path.",
+      note: "A typed task boundary now runs the Interfaze workflow inside the Next.js server layer through one controlled path.",
     },
     {
       value: "4",
@@ -199,7 +199,7 @@ export const siteConfig: SiteConfig = {
     {
       title: "Environment contract",
       description:
-        "NEXT_PUBLIC_API_BASE_URL and NEXT_PUBLIC_GOOGLE_CLIENT_ID are validated centrally before the UI depends on them.",
+        "Public auth config and private INTERFAZE_* server settings are validated centrally before the workflow depends on them.",
     },
     {
       title: "Shared API client",
@@ -239,9 +239,9 @@ export const siteConfig: SiteConfig = {
     },
     {
       title: "Document intelligence",
-      route: "/interfaze/extract-id",
+      route: "/api/tasks/run -> Interfaze SDK",
       description:
-        "Runs typed document extraction through the Interfaze integration with auth, caching, and idempotency context.",
+        "Runs typed document extraction inside the Next.js server boundary with auth, retries, caching, and idempotency context.",
     },
     {
       title: "Chatbot",

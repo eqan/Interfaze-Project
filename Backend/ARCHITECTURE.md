@@ -232,15 +232,26 @@ sequenceDiagram
     participant I as Interfaze SDK/API
 
     C->>R: POST image_url + instruction
+    activate R
     R->>D: Verify JWT
+    activate D
     D-->>R: Auth payload
+    deactivate D
     R->>S: Typed request DTO
+    activate S
     S->>A: extract_id_details()
+    activate A
     A->>I: chat.completions.parse(...)
+    activate I
     I-->>A: Parsed ID schema
+    deactivate I
     A-->>S: InterfazeIdExtractionResult
+    deactivate A
     S-->>R: Structured result
+    deactivate S
+    deactivate R
     R-->>C: status + message + result
+    deactivate C
 ```
 
 ## Caching Strategy

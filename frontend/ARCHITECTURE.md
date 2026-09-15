@@ -14,6 +14,8 @@ flowchart LR
     Config[Config and content maps]
     Runtime[Runtime and API helpers]
     TaskRoute[Next.js task route]
+    TaskServer[Next.js server workflow]
+    Interfaze[Interfaze SDK]
     Backend[FastAPI backend]
 
     User --> PublicRoutes
@@ -23,7 +25,8 @@ flowchart LR
     Sections --> Config
     Sections --> Runtime
     Runtime --> TaskRoute
-    TaskRoute --> Backend
+    TaskRoute --> TaskServer
+    TaskServer --> Interfaze
     Runtime --> Backend
 ```
 
@@ -115,18 +118,21 @@ sequenceDiagram
     participant R as Route page
     participant T as /api/tasks/run
     participant C as Config
-    participant S as Shared sections
+    participant Shared as Shared sections
     participant API as lib/api/*
     participant B as Backend
+    participant Server as Server workflow
 
     U->>R: Navigate
     R->>C: Read copy and page maps
-    R->>S: Compose cards and panels
+    R->>Shared: Compose cards and panels
     opt Dynamic data
         R->>API: Request typed payload
         API->>T: Call same-origin task route
-        T->>B: Proxy typed backend request
-        B-->>T: DTO response
+        T->>Server: Run request validation and execution
+        Server->>B: Call backend only when the feature needs it
+        B-->>Server: DTO response
+        Server-->>T: Task response envelope
         T-->>API: Task response envelope
         API-->>R: Parsed view model
     end
@@ -140,16 +146,16 @@ sequenceDiagram
     participant U as User
     participant C as Extraction console
     participant T as /api/tasks/run
-    participant B as FastAPI backend
-    participant I as Interfaze route
+    participant S as Next.js server workflow
+    participant I as Interfaze SDK
 
     U->>C: Submit public image URL + instruction
     C->>T: POST task envelope
     T->>T: Validate task input + auth cookie
-    T->>B: POST /interfaze/extract-id
-    B->>I: Run typed extraction service
-    I-->>B: Result + cache metadata
-    B-->>T: Structured DTO response
+    T->>S: Validate input + idempotency key
+    S->>I: Run typed extraction request
+    I-->>S: Structured result
+    S-->>T: Result + cache metadata
     T-->>C: Task envelope with status, meta, errors[]
     C-->>U: Success or failure state
 ```
@@ -161,22 +167,33 @@ flowchart TD
     Env[".env.local"]
     ApiBase["NEXT_PUBLIC_API_BASE_URL"]
     GoogleClient["NEXT_PUBLIC_GOOGLE_CLIENT_ID"]
+    InterfazeEnv["INTERFAZE_*"]
     EnvHelper[lib/env.ts]
+    InterfazeHelper[lib/server/interfaze-env.ts]
     ApiClient[lib/api/client.ts]
     AuthApi[lib/api/auth.ts]
+    TaskRoute["app/api/tasks/run/route.ts"]
+    TaskWorkflow["lib/server/tasks/run-task.ts"]
+    InterfazeSdk["lib/server/interfaze.ts"]
     AuthProvider[components/auth-provider.tsx]
     Routes[Protected routes]
     Backend[FastAPI backend]
 
     Env --> ApiBase
     Env --> GoogleClient
+    Env --> InterfazeEnv
     ApiBase --> EnvHelper
     GoogleClient --> EnvHelper
+    InterfazeEnv --> InterfazeHelper
     EnvHelper --> ApiClient
     ApiClient --> AuthApi
     AuthApi --> AuthProvider
     AuthProvider --> Routes
     AuthApi --> Backend
+    Routes --> TaskRoute
+    TaskRoute --> TaskWorkflow
+    InterfazeHelper --> TaskWorkflow
+    TaskWorkflow --> InterfazeSdk
 ```
 
 ## Composition Rule
