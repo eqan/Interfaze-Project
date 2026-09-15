@@ -42,7 +42,7 @@ class WebExtractRequest(CamelModel):
     url: HttpUrl = Field(..., description="Single public https page to extract from.")
     prompt: str = Field(
         ...,
-        min_length=8,
+        min_length=1,
         max_length=500,
         description="What to extract from the page.",
     )
@@ -57,6 +57,14 @@ class WebExtractRequest(CamelModel):
     @classmethod
     def validate_url(cls, value: HttpUrl) -> HttpUrl:
         return validate_public_https_url(value)
+
+    @field_validator("prompt")
+    @classmethod
+    def validate_prompt(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("prompt must not be empty")
+        return cleaned
 
 
 class ExtractCommand(CamelModel):

@@ -109,6 +109,8 @@ def test_request_rejects_http_and_private_hosts():
         WebExtractRequest(url="http://example.com", prompt="extract title")
     with pytest.raises(ValidationError):
         WebExtractRequest(url="https://127.0.0.1", prompt="extract title")
+    with pytest.raises(ValidationError):
+        WebExtractRequest(url="https://example.com", prompt="   ")
 
 
 def test_output_checker_parses_keep_and_missing_fields():
@@ -170,13 +172,13 @@ def test_prompt_refiner_broadens_request_before_planning():
     )
 
     outcome = service.extract_page(
-        WebExtractRequest(url="https://example.com", prompt="find name"),
+        WebExtractRequest(url="https://example.com", prompt="name"),
         context,
     )
 
     assert outcome.status_code == 200
     assert seen["plan_prompt"].startswith("Extract the primary page name")
-    assert "Original request: find name" in seen["plan_prompt"]
+    assert "Original request: name" in seen["plan_prompt"]
     assert "Treat title, heading, or product name as possible synonyms" in seen["child_prompt"]
     assert "prompt_refiner" in outcome.body.meta.tools_used
 

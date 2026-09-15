@@ -266,8 +266,8 @@ function normalizeInput(body: unknown, createUuid: () => string): WebExtractInpu
     throw new ValidationError("url must be a public https URL.");
   }
 
-  if (prompt.length < 8 || prompt.length > 500) {
-    throw new ValidationError("prompt must be between 8 and 500 characters.");
+  if (!prompt || prompt.length > 500) {
+    throw new ValidationError("prompt must be between 1 and 500 characters.");
   }
 
   if (idempotencyKey && (idempotencyKey.length < 8 || idempotencyKey.length > 128)) {

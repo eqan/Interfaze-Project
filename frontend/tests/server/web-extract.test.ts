@@ -77,6 +77,49 @@ test("invalid url returns a stable invalid_request response", async () => {
   assert.equal(outcome.body.errors[0]?.code, "invalid_request");
 });
 
+test("short prompts are allowed so the backend refiner can broaden them", async () => {
+  let receivedPrompt = "";
+  const outcome = await handleWebExtractRequest(
+    {
+      prompt: "name",
+      url: "https://example.com",
+    },
+    {
+      callBackend: async (input) => {
+        receivedPrompt = input.prompt;
+        return {
+          statusCode: 200,
+          body: {
+            errors: [],
+            message: "Page extracted",
+            meta: {
+              cached: false,
+              durationMs: 10,
+              idempotencyKey: input.idempotencyKey,
+              provider: "local-html+deepseek",
+              requestId: "be-short",
+            },
+            result: {
+              commands: [],
+              confidence: 1,
+              data: { name: "Example Domain" },
+              url: "https://example.com",
+            },
+            status: true,
+            task: "extract_page",
+          },
+        };
+      },
+      now: createNow(),
+      uuid: createUuid("request-short"),
+    },
+  );
+
+  assert.equal(outcome.statusCode, 200);
+  assert.equal(receivedPrompt, "name");
+  assert.equal(outcome.body.result?.data.name, "Example Domain");
+});
+
 test("unauthenticated requests still call the extract API", async () => {
   let called = false;
   const outcome = await handleWebExtractRequest(createValidRequest(), {

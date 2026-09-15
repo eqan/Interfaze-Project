@@ -47,7 +47,7 @@ flowchart TD
     Planner[Strategy planner]
     Fetch[Fetch HTML]
     Sanitize[Sanitize page text]
-    Chunk[Chunk plain text]
+    Chunk[Semantic text chunker]
     Regex[Regex evidence]
     ChunkLLM[Chunk extractor]
     Merge[Merge evidence]
