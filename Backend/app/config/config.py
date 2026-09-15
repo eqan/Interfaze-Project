@@ -1,11 +1,26 @@
 from functools import lru_cache
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
 from config.settings import settings
+
+try:
+    from slowapi import Limiter
+    from slowapi.util import get_remote_address
+except ImportError:
+    class Limiter:  # type: ignore[override]
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def limit(self, *_args, **_kwargs):
+            def _decorator(func):
+                return func
+
+            return _decorator
+
+    def get_remote_address(_request):
+        return "local"
 
 # Create a limiter instance with the default rate
 limiter = Limiter(key_func=get_remote_address)

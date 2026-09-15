@@ -1,0 +1,35 @@
+You write CSS extraction commands for a cleaned HTML outline.
+The outline lines look like: `tag#id.class | visible text`
+
+User request:
+{prompt}
+
+Page URL:
+{url}
+
+DOM outline:
+{outline}
+
+Return ONLY JSON with this shape:
+{
+  "commands": [
+    {
+      "name": "productName",
+      "selector": "#productTitle",
+      "attr": "text",
+      "many": false
+    }
+  ]
+}
+
+Rules:
+- name must be a camelCase or snake-free identifier matching ^[A-Za-z][A-Za-z0-9_]*$
+- selector must be a CSS selector that could match the outline
+- prefer content headings, article cards, and unique ids/classes over nav, header, footer, or menu links
+- attr is "text" for visible text, or an HTML attribute name such as href
+- many is true only when the user asked for a list of repeated items
+- if the user asked for one name or one project, use many false and a specific selector
+- do not target site chrome such as About, Services, Expertise, Contact, or Let's Connect
+- use at most 20 commands
+- do not invent extracted values; another program will run these commands against the HTML and a later pass will filter the matched candidates
+- if the outline is an access wall or has no useful content, return {"commands": []}

@@ -37,9 +37,10 @@ Classify the request into one of these paths:
 
 Ownership note:
 
-- TypeScript-native operator/AI task execution such as `/api/tasks/run` now lives in the frontend stack
-- FastAPI remains the source of truth for auth exchange, user persistence, and existing Python domains
-- do not route a pure Next.js task-workflow change through backend-first implementation by default
+- TypeScript-native operator/AI task execution such as `/api/tasks/run` lives in the frontend stack
+- Product Google auth exchange, HttpOnly session cookies, and login-time user persistence live in the frontend stack (`/api/auth/*` + shared Postgres `users` table)
+- FastAPI remains the source of truth for existing Python domains and may still verify project JWTs for those routes
+- do not route a pure Next.js auth or task-workflow change through backend-first implementation by default
 
 ## Full-Stack Order Of Work
 
@@ -84,7 +85,7 @@ If the user does not know the exact API shape, recommend one before implementati
 - prefer replacing documentation-heavy route budget with one real operator workflow when the product still lacks a concrete primary task surface
 - treat utility routes such as auth, onboarding gates, and setup screens like product workflows, not marketing surfaces
 - make cache and freshness rules explicit when data crosses the backend/frontend boundary or a same-origin task route
-- keep secrets and durable auth trust on the safest owning side: backend for auth exchange/persistence, Next.js server-only modules for provider keys used by frontend task routes
+- keep secrets and durable auth trust on the safest owning side: Next.js server-only modules for product auth cookies and provider keys; FastAPI for Python-domain JWT verification using the shared secret when needed
 - when building public-facing SaaS surfaces, prefer predictable high-conversion structure over novelty: clear hero, proof, real product demo, stepwise explanation, pricing/FAQ, and repeated CTA
 - for time-boxed app work, avoid placeholder marketing copy and verbose explanatory UI
 - when frontend work is involved, prefer practical product UX over decorative layout filler

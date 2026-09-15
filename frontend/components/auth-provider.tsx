@@ -9,20 +9,18 @@ import {
 } from "react";
 
 import {
-  clearPersistedAuthSession,
-  persistAuthSession,
-  readPersistedAuthToken,
-} from "@/lib/auth";
-import { loginWithGoogleCredential, verifyAuthToken } from "@/lib/api/auth";
+  fetchAuthSession,
+  loginWithGoogleCredential,
+  logoutAuthSession,
+} from "@/lib/api/auth";
 import type { AuthenticatedUser, AuthStatus } from "@/types/auth";
 
 type AuthContextValue = {
   status: AuthStatus;
   user: AuthenticatedUser | null;
-  token: string | null;
   error: string | null;
   signInWithGoogleCredential: (credential: string) => Promise<void>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   clearError: () => void;
 };
 
@@ -36,68 +34,31 @@ function getErrorMessage(error: unknown) {
   return "Authentication failed. Please try again.";
 }
 
-function getInitialSessionState() {
-  const token = readPersistedAuthToken();
-
-  return {
-    status: "loading" as AuthStatus,
-    user: null,
-    token,
-  };
-}
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [initialSessionState] = useState(getInitialSessionState);
-  const [status, setStatus] = useState<AuthStatus>(initialSessionState.status);
-  const [user, setUser] = useState<AuthenticatedUser | null>(initialSessionState.user);
-  const [token, setToken] = useState<string | null>(initialSessionState.token);
+  const [status, setStatus] = useState<AuthStatus>("loading");
+  const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isCancelled = false;
 
     async function bootstrapSession() {
-      const storedToken = readPersistedAuthToken();
-
-      if (!storedToken) {
-        if (!isCancelled) {
-          setToken(null);
-          setUser(null);
-          setStatus("unauthenticated");
-        }
-        return;
-      }
-
-      if (!isCancelled) {
-        setToken(storedToken);
-        setUser(null);
-      }
-
       try {
-        const verifiedUser = await verifyAuthToken(storedToken);
+        const verifiedUser = await fetchAuthSession();
 
         if (isCancelled) {
           return;
         }
 
-        persistAuthSession({
-          token: storedToken,
-          user: verifiedUser,
-        });
-
-        setToken(storedToken);
         setUser(verifiedUser);
         setError(null);
         setStatus("authenticated");
-      } catch (bootstrapError) {
+      } catch {
         if (isCancelled) {
           return;
         }
 
-        clearPersistedAuthSession();
-        setToken(null);
         setUser(null);
-        setError(getErrorMessage(bootstrapError));
         setStatus("unauthenticated");
       }
     }
@@ -114,18 +75,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setStatus("loading");
 
     try {
-      const session = await loginWithGoogleCredential(credential);
-
-      persistAuthSession(session);
+      const verifiedUser = await loginWithGoogleCredential(credential);
 
       startTransition(() => {
-        setToken(session.token);
-        setUser(session.user);
+        setUser(verifiedUser);
         setStatus("authenticated");
       });
     } catch (signInError) {
-      clearPersistedAuthSession();
-      setToken(null);
       setUser(null);
       setStatus("unauthenticated");
       setError(getErrorMessage(signInError));
@@ -133,11 +89,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  function signOut() {
-    clearPersistedAuthSession();
+  async function signOut() {
+    try {
+      await logoutAuthSession();
+    } catch {
+      // Clear local session state even if the logout request fails.
+    }
 
     startTransition(() => {
-      setToken(null);
       setUser(null);
       setError(null);
       setStatus("unauthenticated");
@@ -147,7 +106,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value = {
     status,
     user,
-    token,
     error,
     signInWithGoogleCredential,
     signOut,

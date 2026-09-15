@@ -8,27 +8,12 @@ export type AuthenticatedUser = {
   exp?: number;
 };
 
-export type StoredAuthSession = {
-  token: string;
-  user: AuthenticatedUser;
+export type AuthSessionResponse = {
+  status: boolean;
+  message?: string;
+  user?: AuthenticatedUser | null;
 };
 
-export type GoogleLoginResponse = {
-  status: boolean;
-  message: string;
-  result: {
-    token: string;
-    user_info: {
-      sub: string;
-      email: string;
-      name: string;
-      picture?: string;
-      exp?: number;
-    };
-  };
-};
+export type GoogleLoginResponse = AuthSessionResponse;
 
-export type VerifyTokenResponse = {
-  status: boolean;
-  user: AuthenticatedUser;
-};
+export type VerifySessionResponse = AuthSessionResponse;

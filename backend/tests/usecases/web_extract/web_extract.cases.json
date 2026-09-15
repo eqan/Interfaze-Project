@@ -1,0 +1,718 @@
+{
+  "suite": "Web Extract",
+  "description": "JSON-driven cases for POST /web-extract/extract-page and extract accuracy.",
+  "module": "web_extract",
+  "fixtures": {
+    "amazon": {
+      "url": "https://www.amazon.com/Charger-Dot-Matrix-Display-Charging-MacBook/dp/B0F9PKSJ17?sr=8-4&th=1",
+      "asin": "B0F9PKSJ17",
+      "title": "SHARGE 140W 3-Port GaN Laptop Charger, USB C MacBook Charger with Display",
+      "price": "$94.00"
+    },
+    "project_aliases": ["Scalable Fleet Dispatcher"],
+    "llms_txt": "## Selected projects\n\n- Dispatch Mission Control (Cloud | 2026): A full-stack logistics dispatch platform.\n- ChatQLM (Quantum | 2026): Consumer app powered by quantum and supercomputing.\n- GPU Lab (Cloud | 2024): Deploy AI models on local GPU servers.\n- Qanooni Legal Law Suite (AI | 2025): AI legal drafting suite.\n- NUCES BLOCKED (Blockchain | 2023): Verified academic portfolios.\n- Super™ (Quantum | 2026): Natural language to quantum solutions.\n- Akito AI (AI | 2025): AI-powered talent pipeline.\n- Material Awesome (Tools | 2021): Linux window manager.\n- X-axis OS (Tools | 2021): An OS simulator.\n- Netflix (Desktop Apps | 2020): A C#/.NET desktop video streaming application.\n",
+    "html": {
+      "example": "<html><head><title>Example Domain</title></head><body><h1>Example Domain</h1><p class=\"lede\">This domain is for use in illustrative examples.</p><span id=\"price\">$20</span></body></html>",
+      "access_wall": "<html><head><title>Amazon.com</title></head><body><h1>Click the button below to continue shopping</h1><p>Continue shopping</p></body></html>",
+      "amazon_product": "<html><head><title>Amazon.com: {title}</title></head><body><span id=\"productTitle\"> {title} </span><div id=\"corePrice_feature_div\"><span class=\"a-price\"><span class=\"a-offscreen\">{price}</span></span></div></body></html>",
+      "amazon_product_deep": "<html><head><title>Amazon.com: {title}</title></head><body><nav>Reviews | Cart | Account</nav><span id=\"productTitle\"> {title} </span><div id=\"corePrice_feature_div\"><span class=\"a-price\"><span class=\"a-offscreen\">{price}</span></span></div><div id=\"productDescription\"><p>140W GaN charger with a Dot Matrix display.</p></div><div id=\"productDetails_techSpec_section_1\"><table><tr><th>Battery</th><td>Not included</td></tr><tr><th>Output</th><td>140W</td></tr></table></div><div id=\"detailBullets\"><span class=\"label\">SKU</span><span class=\"value\">CHG-140-GAN-3P</span></div><div id=\"customerReviews\"><div class=\"review\"><span class=\"review-author\">Priya Shah</span><span class=\"review-rating\">4.5 out of 5</span><span class=\"review-text\">Works well with my MacBook</span></div><div class=\"review\"><span class=\"review-author\">Chris Cole</span><span class=\"review-rating\">5.0 out of 5</span><span class=\"review-text\">Display is bright and useful</span></div></div></body></html>",
+      "portfolio": "<html><body><nav><a href=\"#about\">About me</a><a href=\"#services\">Services</a><a href=\"#projects\">Projects</a><a href=\"#connect\">Let's Connect</a></nav><h3 class=\"about-name\">I'm Eqan Ahmad</h3><a class=\"section-next goto-section\" href=\"#projects\">Next chapter</a><section id=\"projects\"><article><h3 class=\"project-title\">NUCES BLOCKED</h3></article><article><h3 class=\"project-title\">Dispatch Mission Control</h3></article></section></body></html>",
+      "portfolio_freelance": "<html><body><nav><a href=\"#about\">About me</a><a href=\"#services\">Services</a><a href=\"#projects\">Projects</a></nav><h3 class=\"about-name\">I'm Eqan Ahmad</h3><section id=\"contact\"><a href=\"https://www.upwork.com/freelancers/~eqanahmad\">Hire me on Upwork</a><a href=\"https://github.com/eqanahmad\">GitHub</a></section><section id=\"projects\"><article><h3 class=\"project-title\">Dispatch Mission Control</h3></article></section></body></html>",
+      "sparse_shell": "<html><body><h3 class=\"about-name\">I'm Eqan Ahmad</h3><h2 class=\"section-title\">About me</h2><h2 class=\"section-title\">Services</h2><h2 class=\"section-title\">Projects</h2><section id=\"projects\"></section></body></html>",
+      "unrelated_article": "<html><body><h3 class=\"about-name\">I'm Eqan Ahmad</h3><article><h3>Weekly newsletter</h3></article><section id=\"projects\"></section></body></html>"
+    }
+  },
+  "tests": [
+    {
+      "name": "extract_page_http_url",
+      "description": "POST /web-extract/extract-page rejects non-https URLs",
+      "layer": "http",
+      "tags": ["web_extract", "validation"],
+      "input": {
+        "method": "POST",
+        "endpoint": "/web-extract/extract-page",
+        "no_auth": true,
+        "body": {"url": "http://example.com", "prompt": "Extract the page title"}
+      },
+      "expected": {"status_code": 422},
+      "assertions": {"type": "validation_error"}
+    },
+    {
+      "name": "extract_page_localhost",
+      "description": "POST /web-extract/extract-page rejects localhost URLs",
+      "layer": "http",
+      "tags": ["web_extract", "validation"],
+      "input": {
+        "method": "POST",
+        "endpoint": "/web-extract/extract-page",
+        "no_auth": true,
+        "body": {"url": "https://localhost/product", "prompt": "Extract the page title"}
+      },
+      "expected": {"status_code": 422},
+      "assertions": {"type": "validation_error"}
+    },
+    {
+      "name": "extract_page_missing_prompt",
+      "description": "POST /web-extract/extract-page rejects a missing prompt",
+      "layer": "http",
+      "tags": ["web_extract", "validation"],
+      "input": {
+        "method": "POST",
+        "endpoint": "/web-extract/extract-page",
+        "no_auth": true,
+        "body": {"url": "https://example.com"}
+      },
+      "expected": {"status_code": 422},
+      "assertions": {"type": "validation_error"}
+    },
+    {
+      "name": "request_rejects_http_and_private_hosts",
+      "description": "Typed request DTO rejects http and private hosts",
+      "layer": "service",
+      "input": {
+        "prompt": "Extract the page title",
+        "urls": ["http://example.com", "https://localhost/product", "https://127.0.0.1/product"]
+      },
+      "expected": {},
+      "assertions": {"type": "request_validation"}
+    },
+    {
+      "name": "valid_extract_returns_typed_json",
+      "description": "Extract returns title, price, and a final confidence probability",
+      "layer": "service",
+      "input": {
+        "url": "https://example.com",
+        "prompt": "Extract the page title and price",
+        "idempotency_key": "extract-page-demo-1",
+        "html": "example",
+        "uuid": "request-1",
+        "commands": [
+          {"name": "title", "selector": "h1", "attr": "text", "many": false},
+          {"name": "price", "selector": "#price", "attr": "text", "many": false}
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "status": true,
+        "cached": false,
+        "confidence": 1.0,
+        "check_attempts": 1,
+        "data": {"title": "Example Domain", "price": "$20"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "access_wall_browser_failure_stays_blocked",
+      "description": "A Playwright failure on an access wall stays FETCH_BLOCKED",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract the product name and price",
+        "html": "access_wall",
+        "use_browser_fallback": true,
+        "browser_error": true,
+        "uuid": "request-wall-browser-fail",
+        "commands": []
+      },
+      "expected": {
+        "status_code": 422,
+        "status": false,
+        "error_code": "FETCH_BLOCKED",
+        "browser_calls": 1
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "oversized_html_still_extracts_leading_content",
+      "description": "A huge page still extracts title and price from the kept prefix",
+      "layer": "service",
+      "input": {
+        "url": "https://example.com",
+        "prompt": "Extract the page title and price",
+        "html": "oversized_example",
+        "uuid": "request-oversized",
+        "commands": [
+          {"name": "title", "selector": "h1", "attr": "text", "many": false},
+          {"name": "price", "selector": "#price", "attr": "text", "many": false}
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "truncated": true,
+        "confidence": 1.0,
+        "data": {"title": "Example Domain", "price": "$20"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "second_region_pass_fills_missing_project",
+      "description": "A second region pass fills the missing project field",
+      "layer": "service",
+      "input": {
+        "url": "https://eqanahmad.com",
+        "prompt": "What is full name of the profile and a project name from the list of projects",
+        "html": "portfolio",
+        "uuid": "request-second-pass",
+        "use_regions": true,
+        "extract_from_slices": true,
+        "region_keys": ["h3-about-name"],
+        "region_keys_second": ["projects"],
+        "extract_passes": [
+          {"profileName": "Eqan Ahmad"},
+          {"projectName": "NUCES BLOCKED"}
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "region_passes": 2,
+        "confidence": 1.0,
+        "data": {"profileName": "Eqan Ahmad", "projectName": "NUCES BLOCKED"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "amazon_product_html_extracts_title_and_price",
+      "description": "Amazon product HTML extracts SHARGE title and price",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract the product name and price",
+        "idempotency_key": "amazon-sharge-140w-1",
+        "html": "amazon_product",
+        "uuid": "request-amazon-product",
+        "commands": [
+          {"name": "name", "selector": "#productTitle", "attr": "text", "many": false},
+          {"name": "price", "selector": ".a-price .a-offscreen", "attr": "text", "many": false}
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "confidence": 1.0,
+        "data": {"name": "{title}", "price": "{price}"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "live_amazon_product_page_currently_returns_access_wall",
+      "description": "Live Amazon product URL is blocked or empty without catalog/browser",
+      "layer": "service",
+      "tags": ["external"],
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract the product name and price",
+        "html": "live",
+        "uuid": "request-amazon-live",
+        "commands": [
+          {"name": "name", "selector": "#productTitle", "attr": "text", "many": false},
+          {"name": "price", "selector": ".a-price .a-offscreen", "attr": "text", "many": false}
+        ]
+      },
+      "expected": {
+        "status": false,
+        "error_code_in": ["FETCH_BLOCKED", "FETCH_FAILED", "EXTRACT_EMPTY"],
+        "result_not_contains": "SHARGE"
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "access_wall_returns_fetch_blocked",
+      "description": "Access-wall HTML returns FETCH_BLOCKED",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract the product name and price",
+        "html": "access_wall",
+        "uuid": "request-blocked",
+        "commands": []
+      },
+      "expected": {
+        "status_code": 422,
+        "error_code": "FETCH_BLOCKED"
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "empty_extract_returns_structured_failure",
+      "description": "Unmatched CSS returns EXTRACT_EMPTY",
+      "layer": "service",
+      "input": {
+        "url": "https://example.com",
+        "prompt": "Extract the product SKU",
+        "html": "example",
+        "uuid": "request-empty",
+        "commands": [{"name": "sku", "selector": ".missing-sku", "attr": "text", "many": false}]
+      },
+      "expected": {
+        "status_code": 422,
+        "error_code": "EXTRACT_EMPTY",
+        "confidence": 0.0
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "cached_replay_skips_fetch_and_planner",
+      "description": "Idempotent replay returns cached JSON and confidence without refetching",
+      "layer": "service",
+      "input": {
+        "url": "https://example.com",
+        "prompt": "Extract the page title and price",
+        "idempotency_key": "extract-page-cache-1",
+        "html": "example",
+        "uuid": "request-cache",
+        "replay": true,
+        "commands": [{"name": "title", "selector": "h1", "attr": "text", "many": false}]
+      },
+      "expected": {
+        "status_code": 200,
+        "cached": true,
+        "html_calls": 0,
+        "plan_calls": 0,
+        "confidence": 1.0,
+        "check_attempts": 1,
+        "data": {"title": "Example Domain"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "amazon_catalog_short_circuit_skips_html_fetch",
+      "description": "Catalog hit replay preserves provider and confidence without HTML fetch",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract the product name and price",
+        "idempotency_key": "amazon-catalog-1",
+        "uuid": "request-amazon-catalog",
+        "replay": true,
+        "catalog_item": {"name": "{title}", "price": "{price}"},
+        "commands": []
+      },
+      "expected": {
+        "status_code": 200,
+        "cached": true,
+        "provider": "amazon-creators",
+        "html_calls": 0,
+        "confidence": 1.0,
+        "check_attempts": 1,
+        "data": {"name": "{title}", "price": "{price}"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "output_checker_parses_keep_and_missing_fields",
+      "description": "Checker JSON maps confidence, keep, and missing fields",
+      "layer": "service",
+      "input": {
+        "raw": "{\"confidence\": 0.42, \"reason\": \"Reviews are missing\", \"missing\": [\"reviews\"], \"keep\": [\"name\", \"price\"]}"
+      },
+      "expected": {
+        "confidence": 0.42,
+        "missing": ["reviews"],
+        "keep": ["name", "price"]
+      },
+      "assertions": {"type": "output_check"}
+    },
+    {
+      "name": "checker_reuses_accepted_fields_and_fills_missing",
+      "description": "A low-confidence pass keeps name/price and the retry fills nested reviews",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract product name, price, and the first customer review quote with reviewer and rating",
+        "html": "amazon_product_deep",
+        "uuid": "request-check-reuse",
+        "use_regions": true,
+        "extract_from_slices": true,
+        "region_keys": ["customerReviews"],
+        "extract_initial": {"name": "{title}", "price": "{price}"},
+        "extract_on_retry": {
+          "reviews": [
+            {
+              "author": "Priya Shah",
+              "text": "Works well with my MacBook",
+              "rating": "4.5 out of 5"
+            }
+          ]
+        },
+        "check_findings": [
+          {
+            "confidence": 0.41,
+            "missing": ["reviews"],
+            "keep": ["name", "price"],
+            "reason": "Reviews are missing"
+          },
+          {"confidence": 0.96, "missing": [], "keep": ["name", "price", "reviews"]}
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "html_calls": 1,
+        "check_attempts": 2,
+        "confidence": 0.96,
+        "retry_prompt_contains": ["Accepted findings to keep unchanged", "{title}", "reviews"],
+        "data": {
+          "name": "{title}",
+          "price": "{price}",
+          "reviews": [
+            {
+              "author": "Priya Shah",
+              "text": "Works well with my MacBook",
+              "rating": "4.5 out of 5"
+            }
+          ]
+        }
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "checker_stops_after_three_low_confidence_cycles",
+      "description": "After three low scores the best extract and its confidence are still returned",
+      "layer": "service",
+      "input": {
+        "url": "https://example.com",
+        "prompt": "Extract the page title and price",
+        "html": "example",
+        "uuid": "request-check-max",
+        "check_scores": [0.2, 0.31, 0.28],
+        "commands": [
+          {"name": "title", "selector": "h1", "attr": "text", "many": false},
+          {"name": "price", "selector": "#price", "attr": "text", "many": false}
+        ]
+      },
+      "expected": {
+        "status_code": 422,
+        "html_calls": 1,
+        "check_attempts": 3,
+        "status": false,
+        "error_code": "LOW_CONFIDENCE_EXTRACT",
+        "confidence": 0.31,
+        "data": {"title": "Example Domain", "price": "$20"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "freelance_profile_link_uses_contract_and_link_inventory",
+      "description": "A freelance profile link query returns an outbound Upwork profile instead of generic text",
+      "layer": "service",
+      "input": {
+        "url": "https://eqanahmad.com",
+        "prompt": "Find a freelance profile link from the profile page such as Fiverr link or Upwork link",
+        "html": "portfolio_freelance",
+        "uuid": "request-freelance-link"
+      },
+      "expected": {
+        "status_code": 200,
+        "status": true,
+        "confidence": 1.0,
+        "tools_used": ["link_inventory"],
+        "data": {
+          "profiles": [
+            {
+              "platform": "upwork",
+              "url": "https://www.upwork.com/freelancers/~eqanahmad",
+              "anchorText": "Hire me on Upwork"
+            }
+          ]
+        }
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "nested_review_author_rating_from_review_region",
+      "description": "Review region yields nested author, quote, and rating instead of nav chrome",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract the first customer review quote, the reviewer name, and the star rating",
+        "html": "amazon_product_deep",
+        "uuid": "request-nested-review",
+        "use_regions": true,
+        "extract_from_slices": true,
+        "region_keys": ["customerReviews"],
+        "extract_if_slices_contains": [
+          {
+            "needle": "Priya Shah",
+            "data": {
+              "review": {
+                "author": "Priya Shah",
+                "text": "Works well with my MacBook",
+                "rating": "4.5 out of 5"
+              }
+            }
+          }
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "confidence": 1.0,
+        "data": {
+          "review": {
+            "author": "Priya Shah",
+            "text": "Works well with my MacBook",
+            "rating": "4.5 out of 5"
+          }
+        },
+        "data_not_equals": {"review": "Reviews"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "battery_spec_from_tech_table",
+      "description": "Battery spec is taken from the tech table, not from the product title",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "What is the listed battery spec on this product?",
+        "html": "amazon_product_deep",
+        "uuid": "request-battery-spec",
+        "use_regions": true,
+        "extract_from_slices": true,
+        "region_keys": [],
+        "extract_if_slices_contains": [
+          {
+            "needle": "Not included",
+            "data": {"battery": "Not included"}
+          }
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "confidence": 1.0,
+        "data": {"battery": "Not included"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "sku_from_detail_bullets_not_nav",
+      "description": "SKU is taken from detail bullets rather than nav or title chrome",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract the product SKU from the detail bullets",
+        "html": "amazon_product_deep",
+        "uuid": "request-sku",
+        "use_regions": true,
+        "extract_from_slices": true,
+        "region_keys": ["detailBullets"],
+        "extract_if_slices_contains": [
+          {
+            "needle": "CHG-140-GAN-3P",
+            "data": {"sku": "CHG-140-GAN-3P"}
+          }
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "confidence": 1.0,
+        "data": {"sku": "CHG-140-GAN-3P"},
+        "data_not_equals": {"sku": "Cart"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "amazon_catalog_deeper_prompt_fetches_html",
+      "description": "Catalog name and price still fetch HTML when the prompt asks for reviews",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract product name, price, and customer reviews",
+        "html": "amazon_product_deep",
+        "uuid": "request-amazon-deep-catalog",
+        "catalog_item": {"name": "{title}", "price": "{price}"},
+        "use_regions": true,
+        "extract_from_slices": true,
+        "region_keys": ["customerReviews"],
+        "extract_passes": [{"reviews": ["Works well with my MacBook"]}],
+        "extract_plan": {
+          "siteType": "product_page",
+          "childPrompt": "Extract product name, price, and customer review quotes. Catalog may already have title and price. Use region_extract on review blocks.",
+          "fields": ["name", "price", "reviews"],
+          "tools": ["amazon_catalog", "css_seed", "region_extract"]
+        }
+      },
+      "expected": {
+        "status_code": 200,
+        "html_calls": 1,
+        "confidence": 1.0,
+        "provider_contains": "regions",
+        "tools_used": ["amazon_catalog", "region_extract"],
+        "data": {
+          "name": "{title}",
+          "price": "{price}",
+          "reviews": ["Works well with my MacBook"]
+        }
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "amazon_catalog_miss_falls_through_to_html",
+      "description": "Catalog error falls through to local HTML extract",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract the product name and price",
+        "html": "amazon_product",
+        "uuid": "request-amazon-catalog-miss",
+        "catalog_error": true,
+        "commands": [
+          {"name": "name", "selector": "#productTitle", "attr": "text", "many": false},
+          {"name": "price", "selector": ".a-price .a-offscreen", "attr": "text", "many": false}
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "confidence": 1.0,
+        "data": {"name": "{title}", "price": "{price}"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "access_wall_uses_browser_fallback_html",
+      "description": "Playwright fallback extracts Amazon HTML after an access wall",
+      "layer": "service",
+      "input": {
+        "url": "amazon",
+        "prompt": "Extract the product name and price",
+        "html": "access_wall",
+        "browser_html": "amazon_product",
+        "use_browser_fallback": true,
+        "uuid": "request-amazon-browser",
+        "commands": [
+          {"name": "name", "selector": "#productTitle", "attr": "text", "many": false},
+          {"name": "price", "selector": ".a-price .a-offscreen", "attr": "text", "many": false}
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "provider": "local-html+playwright",
+        "browser_calls": 1,
+        "confidence": 1.0,
+        "data": {"name": "{title}", "price": "{price}"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "refine_pass_filters_nav_candidates",
+      "description": "Refine pass keeps a known project and the profile name",
+      "layer": "service",
+      "input": {
+        "url": "https://eqanahmad.com",
+        "prompt": "What is full name of the profile and a project",
+        "html": "portfolio",
+        "uuid": "request-refine",
+        "use_refine": true,
+        "refine_from_candidates": true,
+        "commands": [
+          {"name": "profileName", "selector": "h3.about-name", "attr": "text", "many": false},
+          {"name": "projectName", "selector": "a, h3", "attr": "text", "many": true}
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "provider": "local-html+deepseek+refine",
+        "confidence": 1.0,
+        "data": {"profileName": "Eqan Ahmad"},
+        "known_project_fields": ["projectName"]
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "sparse_section_shell_uses_browser_fallback",
+      "description": "Sparse project section renders in the browser then extracts a known project",
+      "layer": "service",
+      "input": {
+        "url": "https://example.com/profile",
+        "prompt": "Extract the full name of the profile and a project",
+        "html": "sparse_shell",
+        "browser_html": "portfolio",
+        "use_browser_fallback": true,
+        "uuid": "request-sparse-browser",
+        "commands": [
+          {"name": "profileFullName", "selector": "h3.about-name", "attr": "text", "many": false},
+          {"name": "projectName", "selector": "h2.section-title", "attr": "text", "many": false}
+        ]
+      },
+      "expected": {
+        "status_code": 200,
+        "provider": "local-html+playwright",
+        "browser_calls": 1,
+        "data": {"profileFullName": "Eqan Ahmad"},
+        "known_project_fields": ["projectName"]
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "unmatched_project_selector_uses_browser_even_with_other_articles",
+      "description": "Unmatched project CSS still uses browser fallback",
+      "layer": "service",
+      "input": {
+        "url": "https://example.com/profile",
+        "prompt": "Extract the profile name and one project name",
+        "html": "unrelated_article",
+        "browser_html": "portfolio",
+        "use_browser_fallback": true,
+        "uuid": "request-unmatched-selector",
+        "commands": [
+          {"name": "profileName", "selector": "h3.about-name", "attr": "text", "many": false},
+          {"name": "projectName", "selector": "#projects .project-card .project-title", "attr": "text", "many": false}
+        ]
+      },
+      "expected": {
+        "provider": "local-html+playwright",
+        "browser_calls": 1,
+        "data": {"profileName": "Eqan Ahmad"},
+        "known_project_fields": ["projectName"]
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "region_slices_extract_project_instead_of_cta",
+      "description": "Region slices extract a known project instead of Next chapter",
+      "layer": "service",
+      "input": {
+        "url": "https://example.com/profile",
+        "prompt": "What is full name of the profile and a project name from the list of projects",
+        "html": "portfolio",
+        "uuid": "request-regions",
+        "use_regions": true,
+        "extract_from_slices": true,
+        "region_keys": ["h3-about-name", "projects"]
+      },
+      "expected": {
+        "status_code": 200,
+        "provider_contains": "regions",
+        "confidence": 1.0,
+        "data": {"profileName": "Eqan Ahmad"},
+        "known_project_fields": ["projectName"],
+        "data_not_equals": {"projectName": "Next chapter"}
+      },
+      "assertions": {"type": "extract"}
+    },
+    {
+      "name": "llms_txt_region_extracts_known_project_from_sparse_html",
+      "description": "Sparse HTML plus llms.txt extracts a known project without Playwright",
+      "layer": "service",
+      "input": {
+        "url": "https://eqanahmad.com",
+        "prompt": "What is full name of the profile and a project name from the list of projects",
+        "html": "sparse_shell",
+        "browser_html": "portfolio",
+        "use_browser_fallback": true,
+        "use_regions": true,
+        "use_llms_txt": true,
+        "extract_from_slices": true,
+        "region_keys": ["llms.txt", "h3-about-name"],
+        "uuid": "request-llms-txt"
+      },
+      "expected": {
+        "status_code": 200,
+        "browser_calls": 0,
+        "provider_contains": "regions",
+        "confidence": 1.0,
+        "data": {"profileName": "Eqan Ahmad"},
+        "known_project_fields": ["projectName"],
+        "data_not_equals": {"projectName": "Next chapter"}
+      },
+      "assertions": {"type": "extract"}
+    }
+  ]
+}

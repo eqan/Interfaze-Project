@@ -23,7 +23,7 @@ export const siteConfig: SiteConfig = {
     {
       label: "Console",
       href: "/",
-      description: "Run typed extraction tasks and inspect recent results.",
+      description: "Run page extract and document tasks from the protected workspace.",
     },
   ] satisfies NavItem[],
   proofMetrics: [
@@ -76,9 +76,9 @@ export const siteConfig: SiteConfig = {
       href: "/",
       status: "Primary workflow",
       description:
-        "Use this route to submit one deterministic extraction task, inspect typed results, and review recent runs.",
+        "Use this route to extract JSON from one public page or run the document extraction task.",
       outcome:
-        "This becomes the baseline for future operator workflows instead of leaving the app as a documentation shell.",
+        "This is the baseline operator surface for page extract and typed document workflows.",
     },
     {
       title: "Architecture guide",
@@ -204,7 +204,7 @@ export const siteConfig: SiteConfig = {
     {
       title: "Shared API client",
       description:
-        "Auth already runs through reusable request parsing and error handling that future modules can extend.",
+        "Same-origin auth and task callers already run through reusable request parsing and error handling.",
     },
     {
       title: "Backend-ready product shell",
@@ -215,9 +215,9 @@ export const siteConfig: SiteConfig = {
   backendDomains: [
     {
       title: "Auth",
-      route: "/google-login + /verify-token",
+      route: "/api/auth/google-login + /api/auth/session",
       description:
-        "Bootstraps Google sign-in, verifies JWT state, and gates the protected workspace.",
+        "Next.js owns Google sign-in, HttpOnly JWT cookies, shared users upsert, and protected workspace gating.",
     },
     {
       title: "Stats",
@@ -230,6 +230,12 @@ export const siteConfig: SiteConfig = {
       route: "/tickets + /ticket/{uuid}",
       description:
         "Fits queue views, detail surfaces, and operator workflows inside the shared shell.",
+    },
+    {
+      title: "Page extract",
+      route: "/web-extract/extract-page",
+      description:
+        "A parent planner writes a child prompt, tools extract JSON, and a checker reruns the cycle up to 3 times when confidence is below 0.9.",
     },
     {
       title: "Ingestion",

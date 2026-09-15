@@ -14,6 +14,9 @@ fi
 
 cd "$SCRIPT_DIR"
 
+# Default to auto-reload in local dev so Python edits restart the backend.
+export RELOAD="${RELOAD:-true}"
+
 if [ -x "$VENV_PYTHON" ]; then
   "$VENV_PYTHON" main.py
 else

@@ -1,0 +1,24 @@
+You are extracting structured facts from one sanitized plain-text chunk of a web page.
+
+URL:
+{url}
+
+Strategy prompt:
+{strategy_prompt}
+
+Expected output contract:
+{expected_output}
+
+Regex hits from this same chunk:
+{regex_hits}
+
+Plain-text chunk:
+{chunk}
+
+Rules:
+- Return JSON only.
+- Extract only facts grounded in this chunk or the regex hits.
+- Prefer exact values over guesses.
+- If this chunk does not contain useful facts, return {}.
+- Do not invent fields that are not part of the expected output contract.
+- Keep arrays short and deduplicated.

@@ -1,13 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from config.config import limiter
-from slowapi import _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
 from chatbot.chatbotController import router as chatbot_router
 from document_intelligence.documentIntelligenceController import (
     router as document_intelligence_router,
 )
 from ingestion.ingestionController import router as ingestion_router
+from web_extract.webExtractController import router as web_extract_router
 from stats.scheduler import scheduler
 from stats.statsController import router as stats_router
 from ticket.ticketController import router as ticket_router
@@ -15,21 +14,35 @@ from users.usersController import router as user_router
 from database import create_tables
 from config.settings import settings
 import uvicorn
-import sentry_sdk
+
+try:
+    from slowapi import _rate_limit_exceeded_handler
+    from slowapi.errors import RateLimitExceeded
+except ImportError:
+    RateLimitExceeded = None
+
+    def _rate_limit_exceeded_handler(*_args, **_kwargs):
+        return {"detail": "rate limiting unavailable"}
+
+try:
+    import sentry_sdk
+except ImportError:
+    sentry_sdk = None
 
 
 def create_app() -> FastAPI:
     runtime = settings.runtime
     app = FastAPI()
 
-    if runtime.features.enable_sentry and settings.sentry_dsn:
+    if runtime.features.enable_sentry and settings.sentry_dsn and sentry_sdk is not None:
         sentry_sdk.init(
             dsn=settings.sentry_dsn,
             send_default_pii=True,
         )
 
     app.state.limiter = limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    if RateLimitExceeded is not None:
+        app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=runtime.cors.allow_origins,
@@ -48,6 +61,8 @@ def create_app() -> FastAPI:
         app.include_router(ticket_router)
     if runtime.features.enable_ingestion:
         app.include_router(ingestion_router)
+    if runtime.features.enable_web_extract:
+        app.include_router(web_extract_router)
 
     @app.get("/")
     async def root():

@@ -1,0 +1,27 @@
+Follow the child prompt. Pick regions that can answer it.
+The index lines look like: `key | tag | heading | preview`
+Use only those keys. Do not invent keys. Do not extract final field values.
+
+Child prompt:
+{prompt}
+
+Page URL:
+{url}
+
+Region index:
+{index}
+
+Return ONLY JSON with this shape:
+{
+  "regions": ["about", "projects"]
+}
+
+Rules:
+- pick 1 to 8 keys that together can answer the full user request
+- cover every requested fact: names, prices, reviews, specs, descriptions, projects, and similar fields
+- prefer sections, articles, identified content blocks, and ids over hero slogans and pagination CTAs
+- if the user asked for a profile or name, include the about/profile region
+- if the user asked for a project, product, article, review, spec, or similar item, include the region whose heading, id, or preview contains those items
+- if an llms.txt region is present and the user asked for projects, include it
+- skip regions that only contain next/previous/menu chrome
+- JSON only

@@ -1,0 +1,33 @@
+You extract JSON that answers the user request from a few selected HTML slices. Use only this HTML. Do not invent values.
+
+User request / child prompt:
+{prompt}
+
+Page URL:
+{url}
+
+Selected HTML slices:
+{slices}
+
+Return ONLY JSON with this shape:
+{
+  "data": {
+    "name": "Example Product",
+    "price": "$20.00",
+    "reviews": [
+      {"text": "Works well", "rating": "4.5"}
+    ]
+  }
+}
+
+Rules:
+- answer every part of the user request that the slices support
+- nested objects and arrays are allowed when the user asked for lists, reviews, specs, or similar detail
+- every returned string must appear in the slices, or be a shorter cleaned substring
+- keep numbers, prices, and ratings as they appear
+- strip intro prefixes such as "I'm" or "I am"
+- if the user asked for one item, return a string, not an array
+- if the user asked for a list, return only matching items from the slices
+- ignore next/previous chapter links, menus, and section labels used only as chrome
+- omit a field rather than filling it with chrome or guessing
+- JSON only

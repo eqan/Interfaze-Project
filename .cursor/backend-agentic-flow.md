@@ -49,13 +49,14 @@ Rules:
 The backend is organized by domain under `backend/app/`:
 
 - `chatbot/`: chat endpoints, SSE flow, LLM orchestration, chat persistence
-- `users/`: Google auth exchange, JWT verification, user persistence
+- `users/`: legacy FastAPI auth endpoints and JWT verification helpers for Python domains; product Google login/session lives in the frontend
 - `ticket/`: ticket creation, updates, retrieval
 - `stats/`: conversation analytics and scheduled stat generation
 - `ingestion/`: scraping, embedding, vector search, ingestion workflows
+- `web_extract/`: parent planner writes a child prompt, deterministic tools extract JSON, then an LLM checker scores the output and restarts the cycle up to 3 times when confidence is below 0.9
 - `config/`: typed settings, runtime config, DB engine, limiter, lazy integration clients
 - `dependencies/`: shared FastAPI dependencies such as auth helpers
-- `integrations/`: provider adapters for Gemini, DeepSeek, Pinecone, Voyage, and Firecrawl
+- `integrations/`: provider adapters for Gemini, DeepSeek, Pinecone, Voyage, Firecrawl, Amazon Creators, and Playwright HTML fallback
 - `utils/`: shared helpers such as caching and payload guards
 - `prompts/`: prompt loading and prompt assets
 - `database.py`: DB lifecycle helpers including `session_scope()`

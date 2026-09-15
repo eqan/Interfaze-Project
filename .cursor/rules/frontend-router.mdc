@@ -17,11 +17,12 @@ For frontend feature requests, the parent instructions include a clarification-f
 - confirm whether the work is UI-only, Next.js task/API work, or both
 - confirm route, interaction flow, and UI states before implementation
 - confirm or recommend API inputs and outputs when data or task execution is involved
-- prefer extending `app/api` + `lib/server` for TypeScript-native task workflows instead of adding a Python pass-through by default
+- prefer extending `app/api` + `lib/server` for TypeScript-native auth and task workflows instead of adding a Python pass-through by default
 - keep App Router handlers thin and put validation, retries, caching, and provider calls in `lib/server`
 - keep browser callers in `lib/api` and shared envelopes in `types`
+- keep product auth cookies HttpOnly and verify JWTs server-side; never mirror session JWTs into `document.cookie`
 - reuse an existing section, API helper, or server workflow pattern when relevant
-- add or update tests under `frontend/tests/` for server workflows and reliability paths
+- add or update tests under `frontend/tests/` for auth/session and server workflows
 - keep the visual language consistent
 - design pages like real product UI, not filler-heavy showcase screens
 - treat the repo as a SaaS workspace by default rather than a marketing template
@@ -32,7 +33,7 @@ For frontend feature requests, the parent instructions include a clarification-f
 - avoid decorative filler, nested cards, and generic hero layouts when building actual product pages
 - keep auth and access pages especially lean: utility-first layout, one primary action, no promotional card grids unless explicitly requested
 - default to safer frontend persistence: do not drop secrets into browser storage and be explicit about cache freshness for each new data surface
-- keep provider secrets server-only; never move `INTERFAZE_*` into `NEXT_PUBLIC_*`
+- keep provider and auth secrets server-only; never move `AUTH_SECRET_KEY` or `INTERFAZE_*` into `NEXT_PUBLIC_*`
 - treat browser caching as a product decision with scenarios: `no-store` for auth and user-sensitive data, short-lived or focus-based revalidation for dashboards and search, and longer caching only for public reference content
 - for public-facing SaaS pages, prefer a predictable structure with clear hero, proof, product demo, stepwise explanation, and repeated CTA rather than one-off layout experiments
 - for protected app surfaces, default to a familiar top-nav SaaS shell, compact headers, light neutral surfaces, and practical page flow over showcase-style layouts

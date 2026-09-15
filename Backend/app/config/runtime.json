@@ -29,6 +29,7 @@
     "ingestion_scrape": "5/minute",
     "ingestion_search": "5/second",
     "interfaze_extract": "5/minute",
+    "web_extract": "5/minute",
     "ticket": "5/second",
     "stats": "5/second"
   },
@@ -46,6 +47,7 @@
     "enable_ticketing": true,
     "enable_ingestion": true,
     "enable_interfaze": true,
+    "enable_web_extract": true,
     "enable_google_search_grounding": true
   },
   "database_pool": {

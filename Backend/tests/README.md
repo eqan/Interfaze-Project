@@ -19,6 +19,7 @@ A pytest-based testing framework with JSON-driven test cases and module-based or
 | GET | `/tickets` | ticket | Bearer header |
 | POST | `/ingestion/scrape-website` | ingestion | Bearer header |
 | GET | `/ingestion/search` | ingestion | Bearer header |
+| POST | `/web-extract/extract-page` | web_extract | None |
 
 ## Quick Start
 
@@ -31,6 +32,9 @@ python tests/run_tests.py --refresh-tokens
 
 # 3. Run all tests
 python tests/run_tests.py
+
+# 4. Mirror backend runtime logs during the test run
+TEST_RUNTIME_LOG_PATH=/absolute/path/to/backend-log.txt python tests/run_tests.py web_extract
 ```
 
 ## Test Markers
@@ -43,6 +47,7 @@ python tests/run_tests.py
 | `ticket` | Support ticket CRUD tests |
 | `stats` | Conversation statistics tests |
 | `ingestion` | Data scraping, embedding and search tests |
+| `web_extract` | Local HTML, Amazon catalog, Playwright, and llms.txt page extraction tests |
 | `smoke` | Quick smoke tests for CI/CD |
 | `slow` | Slow-running tests (>5 seconds) |
 | `external` | Tests requiring external services (Gemini, Pinecone, etc.) |
@@ -52,7 +57,7 @@ python tests/run_tests.py
 
 Each test module contains two types of tests:
 
-1. **Parametrized tests** — Driven by JSON case files. Each entry in the `tests` array becomes a separate pytest test case. Easy to add new scenarios without writing Python code.
+1. **Parametrized tests** — Driven by JSON case files (`*.cases.json`). Fixtures, inputs, and expected outputs live in JSON. Each entry in the `tests` array becomes a separate pytest test case. Easy to add new scenarios without writing Python code.
 
 2. **Standalone tests** — Written directly in Python for complex assertions, multi-step flows, or edge cases that don't fit the JSON format well.
 
@@ -115,4 +120,28 @@ pytest tests/usecases/chatbot/test_chatbot.py::test_chatbot_returns_valid_respon
 pytest --pdb                    # Drop into debugger on failure
 pytest --tb=long                # Full traceback
 pytest -vv                      # Extra verbose
+python tests/run_tests.py web_extract --server-log /absolute/path/to/backend-log.txt
+python tests/run_tests.py web_extract --server-log /absolute/path/to/backend-log.txt --log-filter /web-extract/extract-page
+python tests/run_tests.py web_extract --server-log /absolute/path/to/backend-log.txt --unexpected-only
+python tests/run_tests.py web_extract --server-log /absolute/path/to/backend-log.txt --fail-on-unexpected-log-status
 ```
+
+### Runtime Log Mirroring
+
+If you are running the backend in a separate terminal and want the test runner to surface the
+server-side request logs, point the runner at that log file:
+
+```bash
+export TEST_RUNTIME_LOG_PATH=/absolute/path/to/backend-log.txt
+export TEST_RUNTIME_LOG_FILTER=/web-extract/extract-page
+export TEST_RUNTIME_LOG_ALLOWED_STATUSES=422
+python tests/run_tests.py web_extract
+```
+
+The runner snapshots the file before pytest starts, then prints only the new matching log lines
+plus an HTTP status summary after the run. For `web_extract`, `422` is treated as expected by
+default because the suite includes validation cases that intentionally hit the endpoint with invalid
+input.
+
+Use `--unexpected-only` to print only suspicious lines, and `--fail-on-unexpected-log-status` to
+turn unexpected mirrored statuses into a failing test run.

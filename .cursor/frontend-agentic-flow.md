@@ -29,8 +29,13 @@ Before editing frontend behavior, read:
 
 If changing a specific UI route, also read the route page and any reused section components.
 
-If changing task APIs, server workflows, provider adapters, or frontend tests, also read:
+If changing task APIs, server workflows, provider adapters, auth/session, or frontend tests, also read:
 
+- `frontend/app/api/auth/google-login/route.ts`
+- `frontend/app/api/auth/session/route.ts`
+- `frontend/lib/server/auth/session.ts`
+- `frontend/app/api/web-extract/run/route.ts`
+- `frontend/lib/server/web-extract/run.ts`
 - `frontend/app/api/tasks/run/route.ts`
 - `frontend/lib/server/tasks/run-task.ts`
 - `frontend/lib/server/interfaze.ts`
@@ -38,6 +43,7 @@ If changing task APIs, server workflows, provider adapters, or frontend tests, a
 - `frontend/lib/api/tasks.ts`
 - `frontend/types/task.ts`
 - `frontend/tests/server/task-run.test.ts`
+- `frontend/tests/server/auth-session.test.ts`
 
 ## Documentation Style
 
@@ -65,9 +71,9 @@ The frontend is organized around:
 
 Ownership split:
 
-- FastAPI still owns durable auth exchange, user persistence, and backend domains that live under `backend/`
-- Next.js owns TypeScript-native task execution for flows like `/api/tasks/run`, including validation, retries, idempotency cache, and Interfaze provider calls
-- Prefer extending the Next.js task boundary for new AI/operator workflows when the stack is already TypeScript-first, instead of forcing every workflow through Python
+- Next.js owns product Google auth exchange, HttpOnly session cookies, login-time user upsert against the shared Postgres `users` table, and TypeScript-native task execution such as `/api/tasks/run`
+- FastAPI still owns existing Python domains under `backend/` and may verify project JWTs for those routes with the shared secret
+- Prefer extending the Next.js auth and task boundaries for new TypeScript-first workflows instead of forcing every flow through Python
 
 ## Feature Workflow
 
@@ -137,13 +143,21 @@ When the feature needs a same-origin API or AI-backed operator workflow:
 - put validation, orchestration, retries, timeouts, and caching in `lib/server/`
 - keep browser callers in `lib/api/` and shared envelopes in `types/`
 - do not scatter provider SDK calls or idempotency logic across page components
-- keep secrets and provider config in server-only env helpers such as `lib/server/interfaze-env.ts`
-- never expose `INTERFAZE_*` or other server secrets through `NEXT_PUBLIC_*`
+- keep secrets and provider config in server-only env helpers such as `lib/server/auth-env.ts` and `lib/server/interfaze-env.ts`
+- never expose `AUTH_SECRET_KEY`, `INTERFAZE_*`, or other server secrets through `NEXT_PUBLIC_*`
 - reuse the existing task envelope shape: typed input, structured result, meta, and `errors[]`
-- make auth gating explicit in the route or workflow context
+- make auth gating explicit in the route or workflow context via cryptographic cookie JWT verification
 - make retry, timeout, cache-hit, invalid-request, and provider-failure behavior explicit and testable
 - inject provider/cache/time/uuid dependencies in workflow functions so unit tests can stay deterministic
-- call FastAPI only when the feature truly needs backend persistence, auth exchange, or an existing Python domain
+- call FastAPI only when the feature truly needs an existing Python domain
+
+Canonical auth flow today:
+
+1. GIS button returns a Google ID token to `AuthProvider`
+2. `POST /api/auth/google-login` verifies Google, upserts `users`, mints JWT, sets HttpOnly cookie
+3. `GET /api/auth/session` verifies the cookie and returns the user
+4. `POST /api/auth/logout` clears the cookie
+5. protected routes and `/api/tasks/run` trust the HttpOnly cookie after server-side verification
 
 Canonical task flow today:
 
@@ -152,6 +166,14 @@ Canonical task flow today:
 3. `lib/server/tasks/run-task.ts` validates, caches, retries, and executes
 4. `lib/server/interfaze.ts` talks to the provider
 5. response returns a typed task envelope to the UI
+
+Canonical page-extract flow today:
+
+1. UI console submits through `lib/api/web-extract.ts`
+2. `POST /api/web-extract/run` forwards the request without a JWT
+3. FastAPI `POST /web-extract/extract-page` uses Amazon Creators GetItems for an ASIN when configured, otherwise local HTML, then Playwright Continue shopping if the HTML is an access wall
+4. FastAPI indexes ids/titles, the model picks relevant regions, only those HTML slices are extracted, then a low-token pass fills `result.data`
+5. response returns a typed envelope with data, commands, meta, and `errors[]`
 
 ## Testing Rules
 
@@ -385,14 +407,13 @@ Stop and revise when you see:
 - keep shared request/response shapes in `types/`
 - use `.env.local` for environment-specific frontend settings
 - use public env only for browser-safe values such as `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID`
-- keep server secrets such as `INTERFAZE_API_KEY` server-only
-- align UI view models with the owning contract: FastAPI DTOs for backend domains, frontend task types for `/api/tasks/*`
+- keep server secrets such as `AUTH_SECRET_KEY` and `INTERFAZE_API_KEY` server-only
+- keep product auth sessions in HttpOnly cookies; do not mirror JWTs into `localStorage`, `sessionStorage`, or `document.cookie`
+- align UI view models with the owning contract: frontend auth/session types for `/api/auth/*`, frontend task types for `/api/tasks/*`, FastAPI DTOs for remaining backend domains
 - validate public runtime values early and fail loudly on unsafe API origins or malformed config
-- do not persist bearer tokens, refresh tokens, or other secrets in `localStorage` or `sessionStorage` unless the user explicitly accepts that tradeoff
-- treat browser-readable cookies as a weaker baseline than `HttpOnly` backend-managed session cookies
-- prefer one source of truth for auth persistence instead of duplicating session data across cookies, storage, and in-memory state
+- prefer one source of truth for auth persistence: the Next.js HttpOnly session cookie
 - assume any user-scoped payload can become sensitive once auth, billing, support, or admin features arrive
-- when a workflow is TypeScript-native, extend the Next.js task route instead of adding a Python pass-through by default
+- when a workflow is TypeScript-native, extend the Next.js auth or task route instead of adding a Python pass-through by default
 
 ## Security Baseline
 

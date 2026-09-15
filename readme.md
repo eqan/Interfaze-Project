@@ -211,6 +211,14 @@ This task route gives the product a TypeScript-native execution boundary for:
 - task metadata and request IDs
 - a consistent success/error envelope for the UI
 
+Page extract is a separate FastAPI workflow, reached from the main console through:
+
+```text
+POST /api/web-extract/run -> POST /web-extract/extract-page
+```
+
+This path uses Amazon Creators GetItems for an ASIN when credentials are set, otherwise fetches one public `https` page with local libraries. Playwright renders access walls and sparse JS shells. An id/title index is sent to the model, only the chosen HTML slices are scraped, and a second low-token pass filters those slices into JSON.
+
 Use `runtime.json` for reusable defaults, especially:
 
 - feature flags

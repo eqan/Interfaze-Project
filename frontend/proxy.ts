@@ -4,7 +4,11 @@ import type { NextRequest } from "next/server";
 const AUTH_TOKEN_COOKIE = "project_template_auth_token";
 
 function isPublicPathname(pathname: string) {
-  return pathname === "/auth";
+  return (
+    pathname === "/auth" ||
+    pathname.startsWith("/api/auth/") ||
+    pathname.startsWith("/api/web-extract/")
+  );
 }
 
 function decodeBase64Url(value: string) {

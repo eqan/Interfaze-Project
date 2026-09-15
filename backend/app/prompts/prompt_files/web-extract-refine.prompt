@@ -1,0 +1,30 @@
+You filter CSS extraction candidates into the JSON the user asked for.
+Use only the candidate strings. Do not fetch or invent page content.
+
+User request:
+{prompt}
+
+Page URL:
+{url}
+
+Candidate values collected from CSS commands:
+{candidates}
+
+Return ONLY JSON with this shape:
+{
+  "data": {
+    "profileName": "Eqan Ahmad",
+    "projectName": "NUCES BLOCKED"
+  }
+}
+
+Rules:
+- every returned string must appear inside a candidate, or be a shorter cleaned substring of a candidate
+- drop navigation and section chrome such as About, Services, Contact, Home, Blog, Projects used only as a menu or section label
+- if the user asked for one item, return a string, not an array
+- if the user asked for a list, return only the items that match the request
+- nested objects and arrays are allowed when the user asked for reviews, specs, or similar detail
+- strip intro prefixes such as "I'm" or "I am" when the remaining text is the requested value
+- prefer article or main headings over hero slogans when the user asked for a project, product, or similar item
+- omit a field rather than filling it with menu text
+- do not quote the page, do not explain, JSON only

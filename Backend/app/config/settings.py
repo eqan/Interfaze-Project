@@ -27,6 +27,7 @@ class RateLimitSettings(BaseModel):
     ingestion_scrape: str = "5/minute"
     ingestion_search: str = "5/second"
     interfaze_extract: str = "5/minute"
+    web_extract: str = "5/minute"
     ticket: str = "5/second"
     stats: str = "5/second"
 
@@ -46,6 +47,7 @@ class FeatureSettings(BaseModel):
     enable_ticketing: bool = True
     enable_ingestion: bool = True
     enable_interfaze: bool = True
+    enable_web_extract: bool = True
     enable_google_search_grounding: bool = True
 
 
@@ -116,6 +118,12 @@ class Settings(BaseSettings):
     interfaze_base_url: str = ""
     interfaze_timeout_seconds: int = 20
     interfaze_retry_attempts: int = 2
+    amazon_creators_client_id: str = ""
+    amazon_creators_client_secret: str = ""
+    amazon_partner_tag: str = ""
+    amazon_marketplace: str = "www.amazon.com"
+    amazon_token_url: str = "https://api.amazon.com/auth/o2/token"
+    web_extract_browser_fallback: bool = True
     runtime_config_path: str = str(Path(__file__).resolve().parent / "runtime.json")
 
     model_config = SettingsConfigDict(

@@ -13,9 +13,11 @@ flowchart LR
     Sections[Route sections]
     Config[Config and content maps]
     Runtime[Runtime and API helpers]
+    AuthRoute[Next.js auth routes]
     TaskRoute[Next.js task route]
     TaskServer[Next.js server workflow]
     Interfaze[Interfaze SDK]
+    Postgres[Postgres users]
     Backend[FastAPI backend]
 
     User --> PublicRoutes
@@ -24,6 +26,10 @@ flowchart LR
     Shell --> Sections
     Sections --> Config
     Sections --> Runtime
+    Runtime --> AuthRoute
+    AuthRoute --> Postgres
+    Runtime --> WebExtractRoute[Next.js web-extract BFF]
+    WebExtractRoute --> Backend
     Runtime --> TaskRoute
     TaskRoute --> TaskServer
     TaskServer --> Interfaze
@@ -88,24 +94,28 @@ sequenceDiagram
     participant A as /auth route
     participant G as Google Identity Services
     participant Provider as AuthProvider
+    participant Login as /api/auth/google-login
+    participant Session as /api/auth/session
+    participant DB as Postgres users
     participant Guard as AuthGuard
     participant Shell as AppShell
-    participant B as FastAPI backend
 
     U->>P: Request protected route
     alt No auth cookie
         P-->>A: Redirect to /auth
         A->>G: Render sign-in button
         G-->>A: Google credential
-        A->>B: POST /google-login
-        B-->>A: Project JWT + user
-        A->>Provider: Persist auth cookie
+        A->>Provider: signInWithGoogleCredential
+        Provider->>Login: POST credential
+        Login->>Login: Verify Google ID token
+        Login->>DB: Upsert user
+        Login-->>Provider: user + HttpOnly cookie
     else Auth cookie present
         P-->>Guard: Allow route request
     end
-    Guard->>Provider: Read auth cookie
-    Provider->>B: GET /verify-token
-    B-->>Provider: Verified user payload
+    Guard->>Provider: Bootstrap session
+    Provider->>Session: GET session
+    Session-->>Provider: Verified user payload
     Provider-->>Shell: Authenticated state
     Shell-->>U: Protected workspace
 ```
@@ -139,6 +149,41 @@ sequenceDiagram
     R-->>U: Render product surface
 ```
 
+## Web Extract Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant C as Page extract console
+    participant N as /api/web-extract/run
+    participant B as FastAPI /web-extract/extract-page
+    participant L as Parent planner
+    participant E as HTML slicer
+    participant Q as LLM output checker
+
+    U->>C: Submit public https URL + prompt
+    C->>N: POST same-origin envelope
+    N->>B: Forward url + prompt
+    alt Cache hit
+        B-->>C: Cached JSON, confidence 1.0
+    else Fresh extract
+        B->>L: Parent compiler: intent, constraints, expected output, child prompt, tools
+        L-->>B: Extraction contract
+        B->>E: Run selected deterministic tools
+        E-->>B: Grounded JSON data + commands
+        B->>Q: Score exact output vs user prompt
+        alt confidence below 0.9 and attempts under 3
+            Q-->>B: Restart extract cycle with missing fields and accepted findings to keep
+        else accept
+            Q-->>C: JSON plus result.confidence, meta.confidence, and checkAttempts
+        else low confidence after 3 tries
+            Q-->>C: Structured low-confidence failure with partial data
+        end
+    else Blocked or empty
+        B-->>C: Structured failure envelope
+    end
+```
+
 ## Task Flow
 
 ```mermaid
@@ -167,33 +212,51 @@ flowchart TD
     Env[".env.local"]
     ApiBase["NEXT_PUBLIC_API_BASE_URL"]
     GoogleClient["NEXT_PUBLIC_GOOGLE_CLIENT_ID"]
+    AuthSecret["AUTH_SECRET_KEY"]
+    DbEnv["DB_*"]
     InterfazeEnv["INTERFAZE_*"]
     EnvHelper[lib/env.ts]
+    AuthEnv[lib/server/auth-env.ts]
     InterfazeHelper[lib/server/interfaze-env.ts]
-    ApiClient[lib/api/client.ts]
     AuthApi[lib/api/auth.ts]
+    AuthRoutes["app/api/auth/*"]
+    AuthWorkflow["lib/server/auth/session.ts"]
+    UsersDb["lib/server/auth/users.ts"]
     TaskRoute["app/api/tasks/run/route.ts"]
+    WebExtractRoute["app/api/web-extract/run/route.ts"]
+    WebExtractWorkflow["lib/server/web-extract/run.ts"]
     TaskWorkflow["lib/server/tasks/run-task.ts"]
     InterfazeSdk["lib/server/interfaze.ts"]
     AuthProvider[components/auth-provider.tsx]
     Routes[Protected routes]
     Backend[FastAPI backend]
+    Postgres[Postgres users]
 
     Env --> ApiBase
     Env --> GoogleClient
+    Env --> AuthSecret
+    Env --> DbEnv
     Env --> InterfazeEnv
     ApiBase --> EnvHelper
     GoogleClient --> EnvHelper
+    AuthSecret --> AuthEnv
+    DbEnv --> AuthEnv
     InterfazeEnv --> InterfazeHelper
-    EnvHelper --> ApiClient
-    ApiClient --> AuthApi
+    AuthApi --> AuthRoutes
+    AuthRoutes --> AuthWorkflow
+    AuthEnv --> AuthWorkflow
+    AuthWorkflow --> UsersDb
+    UsersDb --> Postgres
     AuthApi --> AuthProvider
     AuthProvider --> Routes
-    AuthApi --> Backend
     Routes --> TaskRoute
+    Routes --> WebExtractRoute
+    WebExtractRoute --> WebExtractWorkflow
+    WebExtractWorkflow --> Backend
     TaskRoute --> TaskWorkflow
     InterfazeHelper --> TaskWorkflow
     TaskWorkflow --> InterfazeSdk
+    EnvHelper --> Backend
 ```
 
 ## Composition Rule

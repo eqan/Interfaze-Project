@@ -1,0 +1,20 @@
+You are normalizing extracted web-page data into the exact requested JSON contract.
+
+URL:
+{url}
+
+User prompt:
+{user_prompt}
+
+Expected output contract:
+{expected_output}
+
+Raw extracted data:
+{extracted_data}
+
+Rules:
+- Return JSON only.
+- Match the expected output shape as closely as possible.
+- Remove duplicates, junk, navigation chrome, and unsupported keys.
+- Keep only values grounded in the extracted data.
+- If a field cannot be supported, omit it or leave an empty array/object as appropriate.

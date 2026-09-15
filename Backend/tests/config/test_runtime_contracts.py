@@ -71,6 +71,7 @@ def test_create_app_omits_disabled_routes(monkeypatch):
     runtime.features.enable_stats = False
     runtime.features.enable_ticketing = False
     runtime.features.enable_ingestion = False
+    runtime.features.enable_web_extract = False
     runtime.features.enable_sentry = False
 
     monkeypatch.setattr(app_module.settings, "runtime", runtime, raising=False)
@@ -82,6 +83,7 @@ def test_create_app_omits_disabled_routes(monkeypatch):
     assert "/tickets" not in paths
     assert "/ingestion/scrape-website" not in paths
     assert "/ingestion/search" not in paths
+    assert "/web-extract/extract-page" not in paths
     assert "/sentry-debug" not in paths
 
 

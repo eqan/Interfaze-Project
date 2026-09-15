@@ -16,8 +16,8 @@ export function Navbar() {
   const { signOut, status, user } = useAuth();
   const hasMultipleRoutes = siteConfig.navItems.length > 1;
 
-  function handleSignOut() {
-    signOut();
+  async function handleSignOut() {
+    await signOut();
     setIsMenuOpen(false);
     router.replace("/auth");
   }
